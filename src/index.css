@@ -6,5 +6,6 @@
   body {
     @apply font-pretendard;
     @apply bg-white;
+    @apply text-letter;
   }
 }

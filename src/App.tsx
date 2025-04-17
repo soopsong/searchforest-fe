@@ -1,11 +1,15 @@
-// import { useState } from 'react'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
+import Search from "./pages/Search";
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen max-h-screen w-screen max-w-screen overflow-hidden items-center justify-center">
-      <Home />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/search" element={<Search />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
