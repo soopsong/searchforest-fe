@@ -15,11 +15,11 @@ AI 모델 및 백엔드는 별도 레포로 분리되어 있습니다.
 - 🌳 **네트워크 그래프**와 **버블형 그래프**를 통해 직관적인 탐색 환경을 제공합니다.
 
 ---
-## Prototype
+## 🖥️ Prototype
 
 ![prototypegif](https://github.com/user-attachments/assets/b62ef574-1224-49c7-8563-e436a78d8fb0)
 
-
+---
 ## 🧰 Tech Stack
 
 - **React + TypeScript + Vite**
