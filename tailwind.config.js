@@ -4,6 +4,7 @@ export default {
     extend: {
       fontFamily: {
         pretendard: ["Pretendard", "sans-serif"],
+        montserrat: ["Montserrat Alternates", "sans-serif"],
       },
       colors: {
         primary: {
@@ -13,6 +14,9 @@ export default {
         },
         letter: {
           DEFAULT: "#2C2525",
+        },
+        sand: {
+          DEFAULT: "#F8F5E8",
         },
       },
       borderWidth: {

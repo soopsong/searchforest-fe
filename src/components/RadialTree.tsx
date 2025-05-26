@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
 interface NodeData {
@@ -13,17 +13,32 @@ interface RadialTreeProps {
   height?: number;
 }
 
-const RadialTree: React.FC<RadialTreeProps> = ({
-  data,
-  width = 600,
-  height = 600,
-}) => {
+const RadialTree: React.FC<RadialTreeProps> = ({ data, width, height }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    if (!svgRef.current) return;
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        setDimensions({
+          width: containerWidth,
+          height: containerWidth, // 1:1 비율 유지
+        });
+      }
+    };
 
-    const radius = width / 2;
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
+
+  useEffect(() => {
+    if (!svgRef.current || dimensions.width === 0) return;
+
+    const radius = dimensions.width / 2;
 
     const treeLayout = d3
       .tree<NodeData>()
@@ -68,8 +83,8 @@ const RadialTree: React.FC<RadialTreeProps> = ({
 
     svg
       .append("circle")
-      .attr("cx", width / 2)
-      .attr("cy", height / 2)
+      .attr("cx", dimensions.width / 2)
+      .attr("cy", dimensions.height / 2)
       .attr("r", radius)
       .attr("fill", "url(#circleGradient)")
       .attr("stroke", "rgba(255, 255, 255, 0.6)")
@@ -87,7 +102,10 @@ const RadialTree: React.FC<RadialTreeProps> = ({
 
     const g = svg
       .append("g")
-      .attr("transform", `translate(${width / 2}, ${height / 2})`);
+      .attr(
+        "transform",
+        `translate(${dimensions.width / 2}, ${dimensions.height / 2})`
+      );
 
     // 링크
     const link = g
@@ -167,9 +185,18 @@ const RadialTree: React.FC<RadialTreeProps> = ({
         const searchQuery = d.data.id;
         window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
       });
-  }, [data, width, height]);
+  }, [data, dimensions.width, dimensions.height]);
 
-  return <svg ref={svgRef} width={width} height={height} />;
+  return (
+    <div ref={containerRef} className="w-full">
+      <svg
+        ref={svgRef}
+        width={dimensions.width}
+        height={dimensions.height}
+        style={{ maxWidth: "100%", height: "auto" }}
+      />
+    </div>
+  );
 };
 
 export default RadialTree;

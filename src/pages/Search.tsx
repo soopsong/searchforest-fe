@@ -1,22 +1,15 @@
-// import TreeGraph from "../components/TreeGraph";
-import BubbleChart from "../components/BubbleChart";
-import logo from "../../public/reSearchForest.png";
 import RadialTree from "../components/RadialTree";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Children, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import enter from "../../public/enter.png";
 import results from "../../public/results.png";
 import results2 from "../../public/results2.png";
+import deleteIcon from "../../public/delete.png";
+import LogoButton from "../components/LogoButton";
+import history from "../../public/history.svg";
+import { useSearch } from "../hooks/useSearch";
+// import History from "./History";
 
-const mockBubbleData = [
-  { name: "A", value: 10, group: 1 },
-  { name: "B", value: 30, group: 2 },
-  { name: "C", value: 30, group: 2 },
-  { name: "D", value: 25, group: 2 },
-  { name: "E", value: 50, group: 3 },
-  { name: "F", value: 15, group: 3 },
-  { name: "G", value: 19, group: 3 },
-];
 const radialTreeData = {
   id: "language model",
   value: 1.0,
@@ -125,62 +118,103 @@ export default function Search() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
+  const { treeData, isLoading, error, search } = useSearch();
 
+  // 검색 핸들러
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      const encodedQuery = encodeURIComponent(searchQuery);
+      navigate(`/search?q=${encodedQuery}`);
+      search(searchQuery);
+    }
+  };
+
+  // URL 파라미터 변경 감지
   useEffect(() => {
     const query = new URLSearchParams(location.search).get("q");
     if (query) {
-      setSearchQuery(decodeURIComponent(query));
+      const decodedQuery = decodeURIComponent(query);
+      setSearchQuery(decodedQuery);
+      search(decodedQuery);
     }
-  }, [location.search]);
+  }, [location.search, search]);
 
   return (
     <div className="flex flex-col min-h-screen w-full">
-      <header className="flex flex-row items-center justify-center pt-10 pb-5 w-full gap-5">
-        <button
-          onClick={() => {
-            navigate("/");
-          }}
-          className="cursor-pointer"
-        >
-          <img src={logo} alt="logo" className="w-72" />
-        </button>
-        <div className="flex w-1/2 justify-center border-3 border-primary rounded-full p-2">
-          <div className="flex flex-row gap-2 w-full">
-            <input
-              type="text"
-              placeholder="검색어를 입력하세요"
-              className="flex-1 border-none rounded-md px-7 text-xl focus:outline-none focus:ring-0"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchQuery.trim()) {
-                  navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-                }
-              }}
-            />
-            <button
-              className="flex-none cursor-pointer px-3 py-1 mr-2"
-              onClick={() => {
-                navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-              }}
-            >
-              <img src={enter} alt="enter" className="w-8" />
-            </button>
+      <header className="flex flex-row items-center justify-between py-5 px-10 w-full gap-10">
+        <div className="flex flex-row gap-5 flex-1">
+          <LogoButton className="w-52" />
+          <div className="flex flex-1 justify-start border-2 border-primary rounded-full p-2">
+            <div className="flex flex-row gap-2 w-full">
+              <input
+                type="text"
+                placeholder="검색어를 입력하세요"
+                className="flex-1 border-none rounded-md px-7 text-lg focus:outline-none focus:ring-0 bg-transparent"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    handleSearch();
+                  }
+                }}
+              />
+              <button className="flex-none cursor-pointer py-1 px-3 border-r-2 border-primary">
+                <img src={deleteIcon} alt="delete" className="w-4" />
+              </button>
+              {/* <span className="flex items-center text-primary text-xl">|</span> */}
+              <button
+                className="flex-none cursor-pointer px-1 py-1 mr-5"
+                onClick={handleSearch}
+              >
+                <img src={enter} alt="enter" className="w-5" />
+              </button>
+            </div>
           </div>
+        </div>
+
+        <div className="flex flex-row gap-4 items-center w-[20%] justify-end">
+          {/* <button
+            className="cursor-pointer rounded-xl text-white bg-primary px-8 py-2"
+            onClick={() => {
+              navigate("/login");
+            }}
+          >
+            로그인
+          </button> */}
+          <div>사용자 님</div>
+          <button
+            className="flex flex-row gap-1 items-center"
+            onClick={() => {
+              navigate("/history");
+            }}
+          >
+            <img src={history} alt="history" className="w-7" />
+            <p className="text-primary font-montserrat font-normal text-xl">
+              history
+            </p>
+          </button>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center gap-4">
-        <RadialTree
-          data={searchQuery === "self-attention" ? secondData : radialTreeData}
-        />
-        <img
-          src={searchQuery === "self-attention" ? results2 : results}
-          alt="results"
-          className="w-[50%]"
-        />
+      <main className="grid grid-cols-5 items-center justify-center px-10">
+        <div className="col-span-2 flex flex-col items-center justify-center gap-4 overflow-y-auto p-4">
+          {isLoading ? (
+            <div>검색 중...</div>
+          ) : error ? (
+            <div className="text-red-500">검색 중 오류가 발생했습니다</div>
+          ) : (
+            <RadialTree data={treeData} />
+          )}
+        </div>
+        <div className="col-span-3 flex flex-col items-center justify-center gap-4 overflow-y-auto">
+          <img
+            src={searchQuery === "self-attention" ? results2 : results}
+            alt="results"
+            className="w-full"
+          />
+        </div>
       </main>
     </div>
   );
