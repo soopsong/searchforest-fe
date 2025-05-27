@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../config/constants";
+import { getToken } from "../utils/token";
 // API 응답 타입 정의
 export interface SearchResponse {
   sessionId: string;
@@ -8,7 +9,11 @@ export interface SearchResponse {
   weight: number;
   sublist: Array<{
     text: string;
-    sublist: string[];
+    weight: number;
+    sublist: Array<{
+      text: string;
+      weight: number;
+    }>;
   }>;
 }
 
@@ -19,7 +24,7 @@ interface TreeData {
   children: Array<{
     id: string;
     value: number;
-    children?: Array<{
+    children: Array<{
       id: string;
       value: number;
     }>;
@@ -40,10 +45,10 @@ const transformToTreeData = (data: SearchResponse): TreeData => {
     value: data.weight,
     children: data.sublist.map((item) => ({
       id: item.text,
-      value: 0.8, // 기본값 설정
+      value: item.weight,
       children: item.sublist.map((subItem) => ({
-        id: subItem,
-        value: 0.6, // 기본값 설정
+        id: subItem.text,
+        value: subItem.weight,
       })),
     })),
   };
@@ -57,15 +62,33 @@ export const useSearch = (): UseSearchReturn => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-
+  const [lastSearchKeyword, setLastSearchKeyword] = useState<string | null>(
+    null
+  );
   const search = async (keyword: string) => {
+    if (isLoading || keyword === lastSearchKeyword) {
+      return;
+    }
+    const token = getToken();
+    if (!token) {
+      setError(new Error("토큰이 없습니다"));
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);
+      setLastSearchKeyword(keyword);
+
       const response = await axios.get<SearchResponse>(
         `${API_BASE_URL}/user/search/keyword?text=${encodeURIComponent(
           keyword
-        )}`
+        )}`,
+        // { withCredentials: true }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       console.log("응답데이터: ", response.data);
       console.log("응답 구조: ", {

@@ -1,13 +1,18 @@
 import RadialTree from "../components/RadialTree";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import enter from "../../public/enter.png";
-import results from "../../public/results.png";
-import results2 from "../../public/results2.png";
-import deleteIcon from "../../public/delete.png";
-import LogoButton from "../components/LogoButton";
-import history from "../../public/history.svg";
+// import enter from "../../public/enter.png";
+// import results from "../../public/results.png";
+// import results2 from "../../public/results2.png";
+// import deleteIcon from "../../public/delete.png";
+// import LogoButton from "../components/LogoButton";
+// import history from "../../public/history.svg";
 import { useSearch } from "../hooks/useSearch";
+// import { useAuth } from "../hooks/useAuth";
+// import logoutIcon from "../../public/logout.svg";
+import Header from "../components/Header";
+import { useSearchStore } from "../hooks/useStore";
+import Layout from "../layout/Layout";
 // import History from "./History";
 
 const radialTreeData = {
@@ -116,106 +121,47 @@ const secondData = {
 
 export default function Search() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const { searchQuery, setSearchQuery } = useSearchStore();
   const location = useLocation();
   const { treeData, isLoading, error, search } = useSearch();
+  // const { isAuthenticated, user, logout } = useAuth();
 
-  // 검색 핸들러
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      const encodedQuery = encodeURIComponent(searchQuery);
-      navigate(`/search?q=${encodedQuery}`);
-      search(searchQuery);
-    }
-  };
-
-  // URL 파라미터 변경 감지
+  // URL 파라미터 변경 감지 - URL이 변경될 때만 검색 실행
   useEffect(() => {
     const query = new URLSearchParams(location.search).get("q");
     if (query) {
       const decodedQuery = decodeURIComponent(query);
-      setSearchQuery(decodedQuery);
-      search(decodedQuery);
+      search(decodedQuery); // API 호출
     }
-  }, [location.search, search]);
+  }, [location.search]); // location.search가 변경될 때만 실행
 
   return (
-    <div className="flex flex-col min-h-screen w-full">
-      <header className="flex flex-row items-center justify-between py-5 px-10 w-full gap-10">
-        <div className="flex flex-row gap-5 flex-1">
-          <LogoButton className="w-52" />
-          <div className="flex flex-1 justify-start border-2 border-primary rounded-full p-2">
-            <div className="flex flex-row gap-2 w-full">
-              <input
-                type="text"
-                placeholder="검색어를 입력하세요"
-                className="flex-1 border-none rounded-md px-7 text-lg focus:outline-none focus:ring-0 bg-transparent"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchQuery.trim()) {
-                    handleSearch();
-                  }
-                }}
-              />
-              <button className="flex-none cursor-pointer py-1 px-3 border-r-2 border-primary">
-                <img src={deleteIcon} alt="delete" className="w-4" />
-              </button>
-              {/* <span className="flex items-center text-primary text-xl">|</span> */}
-              <button
-                className="flex-none cursor-pointer px-1 py-1 mr-5"
-                onClick={handleSearch}
-              >
-                <img src={enter} alt="enter" className="w-5" />
-              </button>
-            </div>
+    <Layout>
+      <div className="flex flex-col w-full h-full">
+        <Header
+          variant="search"
+          className="sticky top-0 z-50 bg-white"
+          onSearch={(query) => {
+            setSearchQuery(query); // 검색어 상태 업데이트
+            navigate(`/search?q=${encodeURIComponent(query)}`); // URL 변경
+          }}
+        />
+        <main className="flex-1 flex flex-col items-center justify-center px-10 py-4">
+          <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
+            {isLoading ? (
+              <div className="text-lg">검색 중...</div>
+            ) : error ? (
+              <div className="text-red-500 text-lg">
+                검색 중 오류가 발생했습니다
+              </div>
+            ) : (
+              <div className="w-full h-[calc(100vh-200px)]">
+                <RadialTree data={treeData} />
+              </div>
+            )}
           </div>
-        </div>
-
-        <div className="flex flex-row gap-4 items-center w-[20%] justify-end">
-          {/* <button
-            className="cursor-pointer rounded-xl text-white bg-primary px-8 py-2"
-            onClick={() => {
-              navigate("/login");
-            }}
-          >
-            로그인
-          </button> */}
-          <div>사용자 님</div>
-          <button
-            className="flex flex-row gap-1 items-center"
-            onClick={() => {
-              navigate("/history");
-            }}
-          >
-            <img src={history} alt="history" className="w-7" />
-            <p className="text-primary font-montserrat font-normal text-xl">
-              history
-            </p>
-          </button>
-        </div>
-      </header>
-
-      <main className="grid grid-cols-5 items-center justify-center px-10">
-        <div className="col-span-2 flex flex-col items-center justify-center gap-4 overflow-y-auto p-4">
-          {isLoading ? (
-            <div>검색 중...</div>
-          ) : error ? (
-            <div className="text-red-500">검색 중 오류가 발생했습니다</div>
-          ) : (
-            <RadialTree data={treeData} />
-          )}
-        </div>
-        <div className="col-span-3 flex flex-col items-center justify-center gap-4 overflow-y-auto">
-          <img
-            src={searchQuery === "self-attention" ? results2 : results}
-            alt="results"
-            className="w-full"
-          />
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </Layout>
   );
 }

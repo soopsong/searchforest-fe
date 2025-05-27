@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../config/constants";
+import { getToken, removeToken } from "../utils/token";
+import { useAuthStore } from "../hooks/useStore";
 
 interface User {
   username: string;
@@ -7,15 +9,25 @@ interface User {
 }
 
 export function useAuth() {
+  const { setAuth, clearAuth } = useAuthStore();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setIsAuthenticated(false);
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     fetch(`${API_BASE_URL}/api/user`, {
-      credentials: "include", // 쿠키를 포함하여 요청
+      // credentials: "include", // 쿠키를 포함하여 요청
       headers: {
-        "Content-Type": "application/json",
+        // "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     })
       .then(async (response) => {
@@ -29,12 +41,14 @@ export function useAuth() {
         } else {
           setIsAuthenticated(false);
           setUser(null);
+          removeToken();
         }
       })
       .catch((error) => {
         console.error("Auth error:", error);
         setIsAuthenticated(false);
         setUser(null);
+        removeToken();
       })
       .finally(() => {
         setLoading(false);
@@ -46,20 +60,17 @@ export function useAuth() {
     setIsAuthenticated(true);
   };
 
-  const logout = async () => {
-    try {
-      // 로그아웃 API 호출
-      await fetch(`${API_BASE_URL}/api/logout`, {
-        method: "POST",
-        credentials: "include", // 쿠키를 포함하여 요청
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setUser(null);
-      setIsAuthenticated(false);
-    }
+  const logout = () => {
+    removeToken();
+    setUser(null);
+    setIsAuthenticated(false);
+    clearAuth();
   };
+
+  // 로그인 상태가 변경될 때마다 store 업데이트
+  useEffect(() => {
+    setAuth(isAuthenticated, user);
+  }, [isAuthenticated, user, setAuth]);
 
   return {
     isAuthenticated,
