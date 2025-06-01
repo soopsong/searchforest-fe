@@ -11,9 +11,15 @@ interface RadialTreeProps {
   data: NodeData;
   width?: number;
   height?: number;
+  onNodeClick?: (text: string) => void;
 }
 
-const RadialTree: React.FC<RadialTreeProps> = ({ data, width, height }) => {
+const RadialTree: React.FC<RadialTreeProps> = ({
+  data,
+  width,
+  height,
+  onNodeClick,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -182,10 +188,11 @@ const RadialTree: React.FC<RadialTreeProps> = ({ data, width, height }) => {
           .style("fill", "#000"); // 원래 텍스트 색
       })
       .on("click", (event, d) => {
-        const searchQuery = d.data.id;
-        window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+        if (onNodeClick) {
+          onNodeClick(d.data.id);
+        }
       });
-  }, [data, dimensions.width, dimensions.height]);
+  }, [data, dimensions.width, dimensions.height, onNodeClick]);
 
   return (
     <div ref={containerRef} className="w-full">

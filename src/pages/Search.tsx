@@ -13,6 +13,7 @@ import { useSearch } from "../hooks/useSearch";
 import Header from "../components/Header";
 import { useSearchStore } from "../hooks/useStore";
 import Layout from "../layout/Layout";
+import Papers from "./Papers";
 // import History from "./History";
 
 const radialTreeData = {
@@ -119,21 +120,63 @@ const secondData = {
   ],
 };
 
+// type SearchType = "initial" | "node" | "history";
+
 export default function Search() {
   const navigate = useNavigate();
   const { searchQuery, setSearchQuery } = useSearchStore();
   const location = useLocation();
-  const { treeData, isLoading, error, search } = useSearch();
-  // const { isAuthenticated, user, logout } = useAuth();
+  const { treeData, isLoading, error, search, searchByNode, searchByHistory } =
+    useSearch();
+  const [finalSearch, setFinalSearch] = useState<string | null>(null);
+  // const [searchType, setSearchType] = useState<SearchType>("initial");
 
   // URL 파라미터 변경 감지 - URL이 변경될 때만 검색 실행
   useEffect(() => {
     const query = new URLSearchParams(location.search).get("q");
+    const sessionId = location.state?.sessionId;
+
     if (query) {
       const decodedQuery = decodeURIComponent(query);
-      search(decodedQuery); // API 호출
+      setSearchQuery(decodedQuery); // Header의 검색창 텍스트 업데이트
+
+      // searchType이 'node'인 경우는 노드 클릭으로 인한 URL 변경이므로 무시
+      // if (searchType === "node") {
+      //   searchByNode(decodedQuery);
+      //   return;
+      // }
+
+      if (sessionId) {
+        // 히스토리에서 온 경우
+        // setSearchType("history");
+        searchByHistory(decodedQuery, sessionId);
+        setFinalSearch(decodedQuery); // 히스토리 검색의 경우 finalSearch 설정
+        location.state.sessionId = null;
+        // } else if (searchType === "node") {
+        //   searchByNode(decodedQuery);
+        //   setFinalSearch(decodedQuery); // 노드 검색의 경우 finalSearch 설정
+      } else {
+        // setFinalSearch(null);
+        search(decodedQuery);
+      }
     }
-  }, [location.search]); // location.search가 변경될 때만 실행
+  }, [location.search]);
+
+  const handleNodeClick = (query: string) => {
+    // setSearchType("node");
+    searchByNode(query);
+    setFinalSearch(query); // 노드 클릭의 경우 finalSearch 설정
+    setSearchQuery(query);
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+  };
+
+  // Header의 검색 핸들러
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setFinalSearch(null); // 일반 검색의 경우 finalSearch 초기화
+    // search(query);
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+  };
 
   return (
     <Layout>
@@ -141,24 +184,34 @@ export default function Search() {
         <Header
           variant="search"
           className="sticky top-0 z-50 bg-white"
-          onSearch={(query) => {
-            setSearchQuery(query); // 검색어 상태 업데이트
-            navigate(`/search?q=${encodeURIComponent(query)}`); // URL 변경
-          }}
+          onSearch={handleSearch}
         />
-        <main className="flex-1 flex flex-col items-center justify-center px-10 py-4">
-          <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
-            {isLoading ? (
-              <div className="text-lg">검색 중...</div>
-            ) : error ? (
-              <div className="text-red-500 text-lg">
-                검색 중 오류가 발생했습니다
-              </div>
-            ) : (
-              <div className="w-full h-[calc(100vh-200px)]">
-                <RadialTree data={treeData} />
-              </div>
-            )}
+        <main className="flex-1 flex flex-col items-center px-10 py-4">
+          <div className="flex flex-row items-start justify-between gap-6 w-full h-full">
+            {/* 그래프 섹션 */}
+            <div className="w-1/2 h-full">
+              {isLoading ? (
+                <div className="text-lg w-full text-center">검색 중...</div>
+              ) : error ? (
+                <div className="text-red-500 text-lg w-full text-center">
+                  검색 중 오류가 발생했습니다
+                </div>
+              ) : (
+                <div className="w-full h-full">
+                  <RadialTree data={treeData} onNodeClick={handleNodeClick} />
+                </div>
+              )}
+            </div>
+            {/* 결과 섹션 */}
+            <div className="w-1/2 h-full overflow-y-auto">
+              {finalSearch ? (
+                <Papers searchQuery={finalSearch} />
+              ) : (
+                <div className="text-center text-lg mt-10">
+                  그래프에서 최종 검색어를 선택하세요
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>

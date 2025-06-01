@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import history from "../../public/history.svg";
 import logoutIcon from "../../public/logout.svg";
 import LogoButton from "./LogoButton";
@@ -19,8 +19,10 @@ export default function Header({
   onSearch,
 }: HeaderProps) {
   const navigate = useNavigate();
+  // const location = useLocation();
   const { searchQuery, setSearchQuery } = useSearchStore();
   const { isAuthenticated, user, logout } = useAuth();
+  // const isHistoryPage = location.pathname === "/history";
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -34,7 +36,7 @@ export default function Header({
       <div className="text-xl">{user?.username} 님</div>
       <button
         className="flex flex-row gap-1 items-center"
-        onClick={() => variant === "search" && navigate("/history")}
+        onClick={() => navigate("/history")}
       >
         <img src={history} alt="history" className="w-7" />
         <p className="text-primary font-montserrat font-normal text-xl">
@@ -63,6 +65,7 @@ export default function Header({
       >
         <div className="flex flex-row gap-5 flex-1">
           <LogoButton className="w-52" />
+
           <div className="flex flex-1 justify-start border-2 border-primary rounded-full p-2">
             <div className="flex flex-row gap-2 w-full">
               <input

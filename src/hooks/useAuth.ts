@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../config/constants";
 import { getToken, removeToken } from "../utils/token";
 import { useAuthStore } from "../hooks/useStore";
+import { useSearchStore } from "../hooks/useStore";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   username: string;
@@ -10,6 +12,8 @@ interface User {
 
 export function useAuth() {
   const { setAuth, clearAuth } = useAuthStore();
+  const { clearSearchQuery } = useSearchStore();
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -65,6 +69,8 @@ export function useAuth() {
     setUser(null);
     setIsAuthenticated(false);
     clearAuth();
+    clearSearchQuery();
+    navigate("/login");
   };
 
   // 로그인 상태가 변경될 때마다 store 업데이트
