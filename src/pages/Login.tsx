@@ -4,6 +4,7 @@ import { useState } from "react";
 import LogoButton from "../components/LogoButton";
 import { API_BASE_URL } from "../config/constants";
 import { useAuth } from "../hooks/useAuth";
+import { setToken } from "../utils/token";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,17 +20,21 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // 쿠키를 포함하여 요청
+        // credentials: "include", // 쿠키를 포함하여 요청
         body: JSON.stringify({ email: userId, password }),
       });
 
       const data = await response.json();
       console.log("로그인 응답:", data);
 
-      if (response.ok && data.message === "로그인 성공") {
+      if (response.ok) {
+        setToken(data.token);
         // 로그인 성공 시 사용자 정보를 가져옵니다
         const userResponse = await fetch(`${API_BASE_URL}/api/user`, {
-          credentials: "include", // 쿠키를 포함하여 요청
+          // credentials: "include", // 쿠키를 포함하여 요청
+          headers: {
+            Authorization: `Bearer ${data.token}`,
+          },
         });
 
         if (userResponse.ok) {
