@@ -69,11 +69,15 @@ export default function Papers({ searchQuery }: PapersProps) {
 
       // API 호출을 백그라운드에서 실행
       axios
-        .get(`${API_BASE_URL}/user/paper?paperId=${paper.paperId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        .post(
+          `${API_BASE_URL}/user/paper?paperId=${paper.paperId}`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
         .catch((err) => {
           console.error("논문 접근 기록 중 오류:", err);
         });
@@ -96,8 +100,8 @@ export default function Papers({ searchQuery }: PapersProps) {
   }
 
   return (
-    <div className="space-y-6 p-4">
-      <div className="flex w-full bg-gray-100 rounded-md items-center justify-start py-2 px-4 font-normal text-lg">
+    <div className="space-y-3">
+      <div className="flex w-full bg-gray-100 rounded-md items-center justify-start py-1 px-4 font-normal text-lg">
         "{searchQuery}" 검색 결과
       </div>
       {papers.map((paper) => (

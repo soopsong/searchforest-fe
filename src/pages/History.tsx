@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import { API_BASE_URL } from "../config/constants";
+import axios from "axios";
 
 interface KeywordHistory {
   sessionId: string;
@@ -90,9 +91,17 @@ export default function History() {
     }
   };
 
-  const handlePaperHistoryClick = (paperId: string) => {
+  const handlePaperHistoryClick = async (paperId: string) => {
     try {
-      // navigate(`/paper/${paperId}`);
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${API_BASE_URL}/user/paper?paperId=${paperId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log("논문 조회 기록 저장 완료");
     } catch (error) {
       setError(
         error instanceof Error
@@ -103,7 +112,7 @@ export default function History() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full">
+    <div className="flex flex-col h-screen w-full">
       <Header
         variant="search"
         className="sticky top-0 z-50 bg-white"
@@ -112,13 +121,13 @@ export default function History() {
           navigate(`/search?q=${encodeURIComponent(query)}`);
         }}
       />
-      <main className="flex flex-1 px-10 gap-4">
+      <main className="flex flex-1 px-10 gap-4 overflow-hidden pb-10">
         {/* 키워드 검색 히스토리 섹션 */}
-        <section className="flex-1 flex flex-col">
+        <section className="flex-1 flex flex-col overflow-hidden">
           <div className="flex w-full bg-gray-100 rounded-md items-center justify-start py-2 px-4 font-montserrat font-normal text-xl">
             Keyword History
           </div>
-          <div className="flex-1 overflow-y-auto mt-4">
+          <div className="flex-1 overflow-y-auto mt-2">
             {isLoading && <div className="mt-4">로딩 중...</div>}
             {error && <div className="mt-4 text-red-500">{error}</div>}
             {!isLoading && !error && (
@@ -128,20 +137,28 @@ export default function History() {
                     검색 기록이 없습니다
                   </div>
                 ) : (
-                  <ul className="space-y-4">
+                  <ul>
                     {keywordHistory.map((item) => (
                       <li
                         key={item.sessionId}
-                        className="p-4 bg-white rounded-md shadow hover:bg-gray-50"
+                        className="p-4 bg-white border-b hover:bg-gray-50"
                       >
-                        <div className="font-medium mb-2 text-lg">
+                        <div
+                          className="font-medium text-lg cursor-pointer hover:text-primary transition-colors"
+                          onClick={() =>
+                            handleHistoryItemClick(
+                              item.rootMessage,
+                              item.sessionId
+                            )
+                          }
+                        >
                           {item.rootMessage}
                         </div>
-                        <ul className="space-y-1 pl-4">
+                        <ul className="pl-6">
                           {item.subMessages.map((subMessage, index) => (
                             <li
                               key={`${item.sessionId}-${index}`}
-                              className="text-md text-gray-600 cursor-pointer hover:text-primary transition-colors hover:font-semibold"
+                              className="text-md text-gray-600 cursor-pointer hover:text-primary transition-colors hover:font-semibold mt-1"
                               onClick={() =>
                                 handleHistoryItemClick(
                                   subMessage,
@@ -162,11 +179,11 @@ export default function History() {
           </div>
         </section>
         {/* 논문 검색 히스토리 섹션 */}
-        <section className="flex-1 flex flex-col">
+        <section className="flex-1 flex flex-col overflow-hidden">
           <div className="flex w-full bg-gray-100 rounded-md items-center justify-start py-2 px-4 font-montserrat font-normal text-xl">
             Paper History
           </div>
-          <div className="flex-1 overflow-y-auto mt-4">
+          <div className="flex-1 overflow-y-auto mt-2">
             {isLoading && <div className="mt-4">로딩 중...</div>}
             {error && <div className="mt-4 text-red-500">{error}</div>}
             {!isLoading && !error && (
@@ -176,22 +193,27 @@ export default function History() {
                     논문 검색 기록이 없습니다
                   </div>
                 ) : (
-                  <ul className="space-y-4">
+                  <ul>
                     {paperHistory.map((item) => (
                       <li
                         key={item.id}
-                        className="p-4 bg-white rounded-md shadow hover:bg-gray-50 transition-colors cursor-pointer group"
+                        className="px-4 py-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer border-b"
                       >
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium mb-2 text-lg group-hover:text-primary transition-colors block"
+                        <div
+                          className="flex items-center justify-between"
+                          onClick={() => handlePaperHistoryClick(item.id)}
                         >
-                          {item.title}
-                        </a>
-                        <div className="text-sm text-gray-500">
-                          {new Date(item.searchedAt).toLocaleDateString()}
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-md hover:text-primary transition-colors"
+                          >
+                            {item.title}
+                          </a>
+                          <div className="text-sm text-gray-500 ml-4">
+                            {new Date(item.searchedAt).toLocaleDateString()}
+                          </div>
                         </div>
                       </li>
                     ))}
