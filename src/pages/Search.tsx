@@ -1,20 +1,11 @@
 import RadialTree from "../components/RadialTree";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-// import enter from "../../public/enter.png";
-// import results from "../../public/results.png";
-// import results2 from "../../public/results2.png";
-// import deleteIcon from "../../public/delete.png";
-// import LogoButton from "../components/LogoButton";
-// import history from "../../public/history.svg";
+import { useEffect } from "react";
 import { useSearch } from "../hooks/useSearch";
-// import { useAuth } from "../hooks/useAuth";
-// import logoutIcon from "../../public/logout.svg";
 import Header from "../components/Header";
 import { useSearchStore } from "../hooks/useStore";
 import Layout from "../layout/Layout";
 import Papers from "./Papers";
-// import History from "./History";
 
 const radialTreeData = {
   id: "language model",
@@ -128,8 +119,6 @@ export default function Search() {
   const location = useLocation();
   const { treeData, isLoading, error, search, searchByNode, searchByHistory } =
     useSearch();
-  const [finalSearch, setFinalSearch] = useState<string | null>(null);
-  // const [searchType, setSearchType] = useState<SearchType>("initial");
 
   // URL 파라미터 변경 감지 - URL이 변경될 때만 검색 실행
   useEffect(() => {
@@ -140,32 +129,18 @@ export default function Search() {
       const decodedQuery = decodeURIComponent(query);
       setSearchQuery(decodedQuery); // Header의 검색창 텍스트 업데이트
 
-      // searchType이 'node'인 경우는 노드 클릭으로 인한 URL 변경이므로 무시
-      // if (searchType === "node") {
-      //   searchByNode(decodedQuery);
-      //   return;
-      // }
-
       if (sessionId) {
         // 히스토리에서 온 경우
-        // setSearchType("history");
         searchByHistory(decodedQuery, sessionId);
-        setFinalSearch(decodedQuery); // 히스토리 검색의 경우 finalSearch 설정
         location.state.sessionId = null;
-        // } else if (searchType === "node") {
-        //   searchByNode(decodedQuery);
-        //   setFinalSearch(decodedQuery); // 노드 검색의 경우 finalSearch 설정
       } else {
-        // setFinalSearch(null);
         search(decodedQuery);
       }
     }
   }, [location.search]);
 
   const handleNodeClick = (query: string) => {
-    // setSearchType("node");
     searchByNode(query);
-    setFinalSearch(query); // 노드 클릭의 경우 finalSearch 설정
     setSearchQuery(query);
     navigate(`/search?q=${encodeURIComponent(query)}`);
   };
@@ -173,8 +148,6 @@ export default function Search() {
   // Header의 검색 핸들러
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setFinalSearch(null); // 일반 검색의 경우 finalSearch 초기화
-    // search(query);
     navigate(`/search?q=${encodeURIComponent(query)}`);
   };
 
@@ -204,11 +177,11 @@ export default function Search() {
             </div>
             {/* 결과 섹션 */}
             <div className="w-1/2 h-full overflow-y-auto">
-              {finalSearch ? (
-                <Papers searchQuery={finalSearch} />
+              {searchQuery ? (
+                <Papers searchQuery={searchQuery} />
               ) : (
                 <div className="text-center text-lg mt-10">
-                  그래프에서 최종 검색어를 선택하세요
+                  검색어를 입력하거나 그래프에서 선택하세요.
                 </div>
               )}
             </div>
