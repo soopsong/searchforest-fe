@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../config/constants";
 import { getToken } from "../utils/token";
+import UpIcon from "../components/icons/UpIcon";
+import DownIcon from "../components/icons/DownIcon";
 
 interface Paper {
   paperId: string;
   title: string;
+  summary: string;
   abstractText: string;
   pdfUrl: string;
   citationCount: number;
@@ -22,6 +25,9 @@ export default function Papers({ searchQuery }: PapersProps) {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedAbstracts, setExpandedAbstracts] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -99,42 +105,82 @@ export default function Papers({ searchQuery }: PapersProps) {
     return <div className="text-center py-4">검색된 논문이 없습니다</div>;
   }
 
+  const toggleAbstract = (paperId: string) => {
+    setExpandedAbstracts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(paperId)) {
+        newSet.delete(paperId);
+      } else {
+        newSet.add(paperId);
+      }
+      return newSet;
+    });
+  };
+
   return (
-    <div className="space-y-3">
-      <div className="flex w-full bg-gray-100 rounded-md items-center justify-start py-1 px-4 font-normal text-lg">
+    <div className="flex flex-col h-full">
+      <div className="flex w-full bg-gray-100 rounded-md items-center justify-start py-1 px-4 font-normal text-lg mb-3">
         "{searchQuery}" 검색 결과
       </div>
-      {papers.map((paper) => (
-        <a
-          key={paper.paperId}
-          href={paper.pdfUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => handlePaperClick(paper)}
-          className="block bg-white p-2 rounded-lg hover:bg-gray-50 transition-colors group"
-        >
-          <div className="flex justify-between items-start">
-            <h3 className="text-lg font-semibold flex-1">
-              <span className="text-gray-900 group-hover:text-primary transition-colors">
-                {paper.title}
-              </span>
-            </h3>
-            <div className="flex items-center gap-2 ml-4">
-              <span className="text-sm text-gray-500">
-                인용수: {paper.citationCount}
-              </span>
-              <span className="text-sm text-gray-500">|</span>
-              <span className="text-sm text-gray-500">{paper.year}년</span>
-              <span className="text-sm text-gray-500">|</span>
-              <span className="text-sm text-primary">
-                유사도: {paper.simScore.toFixed(2)}
-              </span>
+      <div className="space-y-3 overflow-y-auto flex-1">
+        {papers.map((paper) => (
+          <div
+            key={paper.paperId}
+            className="block bg-white p-2 rounded-lg hover:bg-gray-50 transition-colors overflow-y-auto"
+          >
+            <div className="flex justify-between items-start">
+              <a
+                href={paper.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => handlePaperClick(paper)}
+                className="flex-1"
+              >
+                <h3 className="text-lg font-semibold">
+                  <span className="text-gray-900 hover:text-primary hover:underline transition-colors duration-100">
+                    {paper.title}
+                  </span>
+                </h3>
+              </a>
+              <div className="flex items-center gap-2 ml-4">
+                <span className="text-sm text-gray-500">
+                  인용수: {paper.citationCount}
+                </span>
+                <span className="text-sm text-gray-500">|</span>
+                <span className="text-sm text-gray-500">{paper.year}년</span>
+                <span className="text-sm text-gray-500">|</span>
+                <span className="text-sm text-primary">
+                  유사도: {paper.simScore.toFixed(2)}
+                </span>
+              </div>
+            </div>
+            <p className="text-gray-600 mb-1">{paper.authors.join(", ")}</p>
+            <div>
+              <p className="text-gray-700">{paper.summary}</p>
+              {paper.abstractText && (
+                <>
+                  {expandedAbstracts.has(paper.paperId) && (
+                    <p className="text-gray-700 mt-2">{paper.abstractText}</p>
+                  )}
+                  <button
+                    onClick={() => toggleAbstract(paper.paperId)}
+                    className="text-sm text-primary-500 hover:font-medium flex items-center gap-1 mt-1"
+                  >
+                    {expandedAbstracts.has(paper.paperId)
+                      ? "초록 접기"
+                      : "초록 보기"}
+                    {expandedAbstracts.has(paper.paperId) ? (
+                      <UpIcon className="w-3 h-3 text-primary-500" />
+                    ) : (
+                      <DownIcon className="w-3 h-3 text-primary-500" />
+                    )}
+                  </button>
+                </>
+              )}
             </div>
           </div>
-          <p className="text-gray-600 mb-1">{paper.authors.join(", ")}</p>
-          <p className="text-gray-700 line-clamp-3">{paper.abstractText}</p>
-        </a>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
