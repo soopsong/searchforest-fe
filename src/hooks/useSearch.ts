@@ -35,8 +35,15 @@ interface UseSearchReturn {
   treeData: TreeData;
   isLoading: boolean;
   error: Error | null;
-  search: (keyword: string) => Promise<void>;
-  searchByNode: (text: string) => Promise<void>;
+  search: (keyword: string, isCitation: boolean) => Promise<void>;
+  searchByNode: (text: string, isCitation: boolean) => Promise<void>;
+  searchByHistory: (text: string, sessionId: string) => Promise<void>;
+  currentResultIndex: number;
+  hasMultipleResults: boolean;
+  switchToNextResult: () => void;
+  switchToPrevResult: () => void;
+  isFirstResult: boolean;
+  isLastResult: boolean;
 }
 
 // API 응답을 RadialTree 데이터 구조로 변환하는 함수
@@ -55,9 +62,7 @@ const transformToTreeData = (data: SearchResponse): TreeData => {
   };
 };
 
-export const useSearch = (): UseSearchReturn & {
-  searchByHistory: (text: string, sessionId: string) => Promise<void>;
-} => {
+export const useSearch = (): UseSearchReturn => {
   const [treeData, setTreeData] = useState<TreeData>({
     id: "language model",
     value: 1.0,
@@ -68,11 +73,12 @@ export const useSearch = (): UseSearchReturn & {
   const [lastSearchKeyword, setLastSearchKeyword] = useState<string | null>(
     null
   );
-  // 루트 검색어와 세션 ID 매핑을 위한 상태
   const [rootSessionId, setRootSessionId] = useState<string | null>(null);
+  const [searchGraph, setSearchGraph] = useState<SearchResponse[]>([]);
+  const [currentResultIndex, setCurrentResultIndex] = useState(0);
 
   // 초기 검색 (루트 검색어로 검색)
-  const search = async (keyword: string) => {
+  const search = async (keyword: string, isCitation: boolean) => {
     if (isLoading || keyword === lastSearchKeyword) {
       return;
     }
@@ -85,11 +91,12 @@ export const useSearch = (): UseSearchReturn & {
       setIsLoading(true);
       setError(null);
       setLastSearchKeyword(keyword);
+      setCurrentResultIndex(0); // 검색 시 인덱스 초기화
 
-      const response = await axios.get<SearchResponse>(
+      const response = await axios.get<SearchResponse[]>(
         `${API_BASE_URL}/user/search/keyword?text=${encodeURIComponent(
           keyword
-        )}`,
+        )}&cit=${isCitation}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -98,11 +105,11 @@ export const useSearch = (): UseSearchReturn & {
       );
       console.log("응답데이터: ", response.data);
 
-      // 루트 검색어의 세션 ID 저장
-      setRootSessionId(response.data.sessionId);
+      setSearchGraph(response.data);
+      setRootSessionId(response.data[0].sessionId);
 
-      // API 응답을 RadialTree 데이터 구조로 변환
-      const transformedData = transformToTreeData(response.data);
+      // 첫 번째 결과로 트리 데이터 변환
+      const transformedData = transformToTreeData(response.data[0]);
       setTreeData(transformedData);
     } catch (err) {
       setError(
@@ -115,7 +122,7 @@ export const useSearch = (): UseSearchReturn & {
   };
 
   // 노드 선택 시 검색
-  const searchByNode = async (text: string) => {
+  const searchByNode = async (text: string, isCitation: boolean) => {
     if (isLoading) return;
 
     const token = getToken();
@@ -132,19 +139,21 @@ export const useSearch = (): UseSearchReturn & {
     try {
       setIsLoading(true);
       setError(null);
+      setCurrentResultIndex(0);
 
-      const response = await axios.get<SearchResponse>(
+      const response = await axios.get<SearchResponse[]>(
         `${API_BASE_URL}/user/search/keyword/${rootSessionId}?text=${encodeURIComponent(
           text
-        )}`,
+        )}&cit=${isCitation}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
+      setSearchGraph(response.data);
 
-      const transformedData = transformToTreeData(response.data);
+      const transformedData = transformToTreeData(response.data[0]);
       setTreeData(transformedData);
       console.log("노드 검색 응답데이터: ", response.data);
     } catch (err) {
@@ -159,7 +168,7 @@ export const useSearch = (): UseSearchReturn & {
     }
   };
 
-  // 히스토리 검색을 위한 새로운 함수
+  // 히스토리 검색
   const searchByHistory = async (text: string, sessionId: string) => {
     if (isLoading) return;
 
@@ -172,10 +181,10 @@ export const useSearch = (): UseSearchReturn & {
     try {
       setIsLoading(true);
       setError(null);
-      // 히스토리의 sessionId를 rootSessionId로 설정
       setRootSessionId(sessionId);
+      setCurrentResultIndex(0);
 
-      const response = await axios.get<SearchResponse>(
+      const response = await axios.get<SearchResponse[]>(
         `${API_BASE_URL}/user/search/keyword/${sessionId}?text=${encodeURIComponent(
           text
         )}`,
@@ -186,7 +195,8 @@ export const useSearch = (): UseSearchReturn & {
         }
       );
       console.log("히스토리 검색 응답데이터: ", response.data);
-      const transformedData = transformToTreeData(response.data);
+      setSearchGraph(response.data);
+      const transformedData = transformToTreeData(response.data[0]);
       setTreeData(transformedData);
     } catch (err) {
       setError(
@@ -199,12 +209,46 @@ export const useSearch = (): UseSearchReturn & {
     }
   };
 
+  // 다음 결과로 전환하는 함수
+  const switchToNextResult = () => {
+    if (searchGraph.length <= 1) return;
+
+    const nextIndex = currentResultIndex + 1;
+    if (nextIndex >= searchGraph.length) return;
+
+    setCurrentResultIndex(nextIndex);
+    const nextResult = searchGraph[nextIndex];
+    setRootSessionId(nextResult.sessionId);
+    const transformedData = transformToTreeData(nextResult);
+    setTreeData(transformedData);
+  };
+
+  // 이전 결과로 전환하는 함수
+  const switchToPrevResult = () => {
+    if (searchGraph.length <= 1) return;
+
+    const prevIndex = currentResultIndex - 1;
+    if (prevIndex < 0) return;
+
+    setCurrentResultIndex(prevIndex);
+    const prevResult = searchGraph[prevIndex];
+    setRootSessionId(prevResult.sessionId);
+    const transformedData = transformToTreeData(prevResult);
+    setTreeData(transformedData);
+  };
+
   return {
     treeData,
     isLoading,
     error,
     search,
     searchByNode,
-    searchByHistory, // 새로운 함수 추가
+    searchByHistory,
+    currentResultIndex,
+    hasMultipleResults: searchGraph.length > 1,
+    switchToNextResult,
+    switchToPrevResult,
+    isFirstResult: currentResultIndex === 0,
+    isLastResult: currentResultIndex === searchGraph.length - 1,
   };
 };
