@@ -7,153 +7,63 @@ import { useSearchStore } from "../hooks/useStore";
 import Layout from "../layout/Layout";
 import Papers from "./Papers";
 import CitationTree from "../components/CitationTree";
-import { GraphStyle } from "../types/tree";
+import { GraphStyle, CitationNodeData } from "../types/tree";
+import MoveTree from "../components/MoveTree";
+import SCitationTree from "../components/SCitationTree";
 
-const radialTreeData = {
+const testCitationData = {
   id: "language model",
   value: 1.0,
+  citation: 30,
   children: [
     {
       id: "transformer",
-      value: 0.8,
+      value: 1,
+      citation: 10,
       children: [
-        { id: "self-attention", value: 0.6 },
-        { id: "multi-head attention", value: 0.5 },
-        { id: "positional encoding", value: 0.4 },
+        { id: "self-attention", value: 0.6, citation: 5 },
+        { id: "multi-head attention", value: 0.5, citation: 3 },
+        { id: "positional encoding", value: 0.4, citation: 2 },
       ],
     },
     {
       id: "pretrained model",
-      value: 0.9,
+      value: 0.6,
+      citation: 15,
       children: [
-        { id: "bert", value: 0.7 },
-        { id: "gpt", value: 0.6 },
-        { id: "electra", value: 0.4 },
+        { id: "bert", value: 0.7, citation: 5 },
+        { id: "gpt", value: 0.6, citation: 3 },
+        { id: "electra", value: 0.4, citation: 2 },
       ],
     },
     {
       id: "masked language modeling",
-      value: 0.85,
+      value: 0.3,
+      citation: 30,
       children: [
-        { id: "token masking", value: 0.6 },
-        { id: "mlm objective", value: 0.5 },
-        { id: "context prediction", value: 0.5 },
+        { id: "token masking", value: 0.6, citation: 5 },
+        { id: "mlm objective", value: 0.5, citation: 3 },
+        { id: "context prediction", value: 0.5, citation: 2 },
       ],
     },
     {
       id: "fine-tuning",
       value: 0.85,
+      citation: 10,
       children: [
-        { id: "task adaptation", value: 0.6 },
-        { id: "domain transfer", value: 0.5 },
-        { id: "parameter-efficient tuning", value: 0.5 },
+        { id: "task adaptation", value: 0.1, citation: 5 },
+        { id: "domain transfer", value: 0.9, citation: 10 },
+        { id: "parameter-efficient tuning", value: 0.5, citation: 2 },
       ],
     },
     {
       id: "causal language modeling",
       value: 0.85,
+      citation: 10,
       children: [
-        { id: "autoregressive model", value: 0.6 },
-        { id: "next token prediction", value: 0.5 },
-        { id: "gpt decoder", value: 0.7 },
-      ],
-    },
-  ],
-};
-
-const testCitationData = {
-  id: "language model",
-  value: 1.0,
-  citation: 10,
-  children: [
-    {
-      id: "transformer",
-      value: 0.8,
-      citation: 8,
-      children: [
-        {
-          id: "attention",
-          value: 0.9,
-          citation: 9,
-        },
-        {
-          id: "self-attention",
-          value: 0.7,
-          citation: 7,
-        },
-        {
-          id: "multi-head",
-          value: 0.6,
-          citation: 6,
-        },
-      ],
-    },
-    {
-      id: "bert",
-      value: 0.7,
-      citation: 7,
-      children: [
-        {
-          id: "pretraining",
-          value: 0.8,
-          citation: 8,
-        },
-        {
-          id: "fine-tuning",
-          value: 0.6,
-          citation: 6,
-        },
-      ],
-    },
-    {
-      id: "gpt",
-      value: 0.6,
-      citation: 6,
-      children: [
-        {
-          id: "decoder",
-          value: 0.7,
-          citation: 7,
-        },
-        {
-          id: "generation",
-          value: 0.5,
-          citation: 5,
-        },
-      ],
-    },
-    {
-      id: "gpt",
-      value: 0.6,
-      citation: 6,
-      children: [
-        {
-          id: "decoder",
-          value: 0.7,
-          citation: 7,
-        },
-        {
-          id: "generation",
-          value: 0.5,
-          citation: 5,
-        },
-      ],
-    },
-    {
-      id: "gpt",
-      value: 0.6,
-      citation: 6,
-      children: [
-        {
-          id: "decoder",
-          value: 0.7,
-          citation: 7,
-        },
-        {
-          id: "generation",
-          value: 0.5,
-          citation: 5,
-        },
+        { id: "autoregressive model", value: 0.6, citation: 5 },
+        { id: "next token prediction", value: 0.5, citation: 3 },
+        { id: "gpt decoder", value: 0.7, citation: 27 },
       ],
     },
   ],
@@ -165,6 +75,7 @@ export default function Search() {
   const location = useLocation();
   const {
     treeData,
+    // citationTreeData,
     isLoading,
     error,
     search,
@@ -199,13 +110,19 @@ export default function Search() {
         searchByHistory(decodedQuery, sessionId);
         location.state.sessionId = null;
       } else {
-        search(decodedQuery, graphStyle === "citation");
+        search(decodedQuery);
       }
     }
   }, [location.search]);
 
+  // useEffect(() => {
+  //   if (searchQuery) {
+  //     searchByNode(searchQuery, graphStyle === "citation");
+  //   }
+  // }, [graphStyle]);
+
   const handleNodeClick = async (query: string) => {
-    await searchByNode(query, graphStyle === "citation");
+    await searchByNode(query);
     setSearchQuery(query);
     navigate(`/search?q=${encodeURIComponent(query)}`, {
       state: { skipSearch: true },
@@ -218,12 +135,12 @@ export default function Search() {
     navigate(`/search?q=${encodeURIComponent(query)}`);
   };
 
-  const handleStyleChange = async (newStyle: GraphStyle) => {
-    setGraphStyle(newStyle);
-    if (lastSearchKeyword) {
-      await search(lastSearchKeyword, newStyle === "citation");
-    }
-  };
+  // const handleStyleChange = async (newStyle: GraphStyle) => {
+  //   setGraphStyle(newStyle);
+  //   if (lastSearchKeyword) {
+  //     await search(lastSearchKeyword, newStyle === "citation");
+  //   }
+  // };
 
   return (
     <Layout>
@@ -244,14 +161,24 @@ export default function Search() {
                   검색 중 오류가 발생했습니다
                 </div>
               ) : (
-                <div className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                   {graphStyle === "radial" ? (
                     <RadialTree data={treeData} onNodeClick={handleNodeClick} />
                   ) : (
-                    <CitationTree
-                      data={testCitationData}
-                      onNodeClick={handleNodeClick}
-                    />
+                    <>
+                      {/* <CitationTree
+                        data={testCitationData}
+                        onNodeClick={handleNodeClick}
+                      /> */}
+                      <SCitationTree
+                        data={treeData}
+                        onNodeClick={handleNodeClick}
+                      />
+                      {/* <MoveTree
+                        data={testCitationData}
+                        onNodeClick={handleNodeClick}
+                      /> */}
+                    </>
                   )}
 
                   <div className="flex flex-row justify-between">
@@ -264,8 +191,8 @@ export default function Search() {
                           setGraphStyle(e.target.value as GraphStyle)
                         }
                       >
-                        <option value="radial">방사형</option>
-                        <option value="citation">인용 트리</option>
+                        <option value="radial">기본</option>
+                        <option value="citation">유사도 반영</option>
                       </select>
                     </div>
 
