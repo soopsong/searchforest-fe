@@ -143,9 +143,14 @@ const RadialTree: React.FC<RadialTreeProps> = ({
       .append("circle")
       .attr("r", (d) => d.data.value * 25 + 15)
       .attr("fill", (d) => {
-        if (d.depth === 0) return "#92B44C";
-        if (d.depth === 1) return "#BBD38A";
-        return "#E2F1C4";
+        switch (d.depth) {
+          case 0:
+            return "#92B44C";
+          case 1:
+            return "#BBD38A";
+          default:
+            return "#E2F1C4";
+        }
       })
       // .attr("fill", (d) => {
       //   return "transparent";
@@ -203,7 +208,12 @@ const RadialTree: React.FC<RadialTreeProps> = ({
       .style("align-items", "center")
       .style("justify-content", "center")
       .style("text-align", "center")
-      .style("font-size", (d) => `${d.data.value * 10 + 8}px`)
+      // .style("font-size", (d) => `${d.data.value * 10 + 8}px`)
+      .style("font-size", (d) => {
+        if (d.depth === 0) return "16px";
+        if (d.depth === 1) return "14px";
+        return "12px";
+      })
       .style("color", "#000")
       .style("cursor", "pointer")
       .style("word-wrap", "break-word")
