@@ -6,6 +6,7 @@ import { useSearchStore } from "../hooks/useStore";
 import { useAuthStore } from "../hooks/useStore";
 import { useAuth } from "../hooks/useAuth";
 import enter from "../../public/enter.png";
+import { useState, useEffect } from "react";
 
 interface HeaderProps {
   variant?: "home" | "search";
@@ -22,12 +23,18 @@ export default function Header({
   // const location = useLocation();
   const { searchQuery, setSearchQuery } = useSearchStore();
   const { isAuthenticated, user, logout } = useAuth();
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   // const isHistoryPage = location.pathname === "/history";
 
+  // searchQuery가 외부에서 변경될 때 localSearchQuery도 업데이트
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery);
+  }, [searchQuery]);
+
   const handleSearch = () => {
-    if (searchQuery.trim()) {
-      setSearchQuery(searchQuery); // 검색어 상태 업데이트
-      onSearch?.(searchQuery); // 부모 컴포넌트의 검색 핸들러 호출
+    if (localSearchQuery.trim()) {
+      setSearchQuery(localSearchQuery); // 실제 검색어 업데이트
+      onSearch?.(localSearchQuery);
     }
   };
 
@@ -71,11 +78,11 @@ export default function Header({
               <input
                 type="text"
                 placeholder="검색어를 입력하세요"
-                className="flex-1 border-none rounded-md px-7 text-lg focus:outline-none focus:ring-0 bg-transparent"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 border-none rounded-md px-5 text-lg focus:outline-none focus:ring-0 bg-transparent"
+                value={localSearchQuery}
+                onChange={(e) => setLocalSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchQuery.trim()) {
+                  if (e.key === "Enter" && localSearchQuery.trim()) {
                     handleSearch();
                   }
                 }}

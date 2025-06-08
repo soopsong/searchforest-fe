@@ -1,182 +1,146 @@
 import RadialTree from "../components/RadialTree";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-// import enter from "../../public/enter.png";
-// import results from "../../public/results.png";
-// import results2 from "../../public/results2.png";
-// import deleteIcon from "../../public/delete.png";
-// import LogoButton from "../components/LogoButton";
-// import history from "../../public/history.svg";
 import { useSearch } from "../hooks/useSearch";
-// import { useAuth } from "../hooks/useAuth";
-// import logoutIcon from "../../public/logout.svg";
 import Header from "../components/Header";
 import { useSearchStore } from "../hooks/useStore";
 import Layout from "../layout/Layout";
 import Papers from "./Papers";
-// import History from "./History";
+import CitationTree from "../components/CitationTree";
+import { GraphStyle, CitationNodeData } from "../types/tree";
+import MoveTree from "../components/MoveTree";
+import SCitationTree from "../components/SCitationTree";
 
-const radialTreeData = {
+const testCitationData = {
   id: "language model",
   value: 1.0,
+  citation: 30,
   children: [
     {
       id: "transformer",
-      value: 0.8,
+      value: 1,
+      citation: 10,
       children: [
-        { id: "self-attention", value: 0.6 },
-        { id: "multi-head attention", value: 0.5 },
-        { id: "positional encoding", value: 0.4 },
+        { id: "self-attention", value: 0.6, citation: 5 },
+        { id: "multi-head attention", value: 0.5, citation: 3 },
+        { id: "positional encoding", value: 0.4, citation: 2 },
       ],
     },
     {
       id: "pretrained model",
-      value: 0.9,
+      value: 0.6,
+      citation: 15,
       children: [
-        { id: "bert", value: 0.7 },
-        { id: "gpt", value: 0.6 },
-        { id: "electra", value: 0.4 },
+        { id: "bert", value: 0.7, citation: 5 },
+        { id: "gpt", value: 0.6, citation: 3 },
+        { id: "electra", value: 0.4, citation: 2 },
       ],
     },
     {
       id: "masked language modeling",
-      value: 0.85,
+      value: 0.3,
+      citation: 30,
       children: [
-        { id: "token masking", value: 0.6 },
-        { id: "mlm objective", value: 0.5 },
-        { id: "context prediction", value: 0.5 },
+        { id: "token masking", value: 0.6, citation: 5 },
+        { id: "mlm objective", value: 0.5, citation: 3 },
+        { id: "context prediction", value: 0.5, citation: 2 },
       ],
     },
     {
       id: "fine-tuning",
       value: 0.85,
+      citation: 10,
       children: [
-        { id: "task adaptation", value: 0.6 },
-        { id: "domain transfer", value: 0.5 },
-        { id: "parameter-efficient tuning", value: 0.5 },
+        { id: "task adaptation", value: 0.1, citation: 5 },
+        { id: "domain transfer", value: 0.9, citation: 10 },
+        { id: "parameter-efficient tuning", value: 0.5, citation: 2 },
       ],
     },
     {
       id: "causal language modeling",
       value: 0.85,
+      citation: 10,
       children: [
-        { id: "autoregressive model", value: 0.6 },
-        { id: "next token prediction", value: 0.5 },
-        { id: "gpt decoder", value: 0.7 },
+        { id: "autoregressive model", value: 0.6, citation: 5 },
+        { id: "next token prediction", value: 0.5, citation: 3 },
+        { id: "gpt decoder", value: 0.7, citation: 27 },
       ],
     },
   ],
 };
-
-const secondData = {
-  id: "self-attention",
-  value: 1.0,
-  children: [
-    {
-      id: "multi-head attention",
-      value: 0.8,
-      children: [
-        { id: "projection layers", value: 0.5 },
-        { id: "head concatenation", value: 0.4 },
-        { id: "parallel attention heads", value: 0.6 },
-      ],
-    },
-    {
-      id: "scaled dot-product attention",
-      value: 0.8,
-      children: [
-        { id: "query-key dot product", value: 0.6 },
-        { id: "scaling factor", value: 0.5 },
-        { id: "softmax weighting", value: 0.4 },
-      ],
-    },
-    {
-      id: "positional encoding",
-      value: 0.8,
-      children: [
-        { id: "sine cosine embedding", value: 0.6 },
-        { id: "sequence order injection", value: 0.5 },
-        { id: "absolute position bias", value: 0.4 },
-      ],
-    },
-    {
-      id: "attention mechanism",
-      value: 0.8,
-      children: [
-        { id: "alignment score", value: 0.6 },
-        { id: "attention weights", value: 0.5 },
-        { id: "context vector", value: 0.4 },
-      ],
-    },
-    {
-      id: "transformer architecture",
-      value: 0.8,
-      children: [
-        { id: "encoder-decoder", value: 0.6 },
-        { id: "layer normalization", value: 0.5 },
-        { id: "residual connection", value: 0.4 },
-      ],
-    },
-  ],
-};
-
-// type SearchType = "initial" | "node" | "history";
 
 export default function Search() {
   const navigate = useNavigate();
   const { searchQuery, setSearchQuery } = useSearchStore();
   const location = useLocation();
-  const { treeData, isLoading, error, search, searchByNode, searchByHistory } =
-    useSearch();
-  const [finalSearch, setFinalSearch] = useState<string | null>(null);
-  // const [searchType, setSearchType] = useState<SearchType>("initial");
+  const {
+    treeData,
+    // citationTreeData,
+    isLoading,
+    error,
+    search,
+    searchByNode,
+    searchByHistory,
+    hasMultipleResults,
+    switchToNextResult,
+    switchToPrevResult,
+    isFirstResult,
+    isLastResult,
+  } = useSearch();
+  const [graphStyle, setGraphStyle] = useState<GraphStyle>("radial");
 
   // URL 파라미터 변경 감지 - URL이 변경될 때만 검색 실행
   useEffect(() => {
     const query = new URLSearchParams(location.search).get("q");
     const sessionId = location.state?.sessionId;
+    const skipSearch = location.state?.skipSearch;
 
     if (query) {
       const decodedQuery = decodeURIComponent(query);
       setSearchQuery(decodedQuery); // Header의 검색창 텍스트 업데이트
 
-      // searchType이 'node'인 경우는 노드 클릭으로 인한 URL 변경이므로 무시
-      // if (searchType === "node") {
-      //   searchByNode(decodedQuery);
-      //   return;
-      // }
+      if (skipSearch) {
+        // 노드 클릭으로 인한 URL 변경인 경우 검색 스킵
+        location.state.skipSearch = null;
+        return;
+      }
 
       if (sessionId) {
         // 히스토리에서 온 경우
-        // setSearchType("history");
         searchByHistory(decodedQuery, sessionId);
-        setFinalSearch(decodedQuery); // 히스토리 검색의 경우 finalSearch 설정
         location.state.sessionId = null;
-        // } else if (searchType === "node") {
-        //   searchByNode(decodedQuery);
-        //   setFinalSearch(decodedQuery); // 노드 검색의 경우 finalSearch 설정
       } else {
-        // setFinalSearch(null);
         search(decodedQuery);
       }
     }
   }, [location.search]);
 
-  const handleNodeClick = (query: string) => {
-    // setSearchType("node");
-    searchByNode(query);
-    setFinalSearch(query); // 노드 클릭의 경우 finalSearch 설정
+  // useEffect(() => {
+  //   if (searchQuery) {
+  //     searchByNode(searchQuery, graphStyle === "citation");
+  //   }
+  // }, [graphStyle]);
+
+  const handleNodeClick = async (query: string) => {
+    await searchByNode(query);
     setSearchQuery(query);
-    navigate(`/search?q=${encodeURIComponent(query)}`);
+    navigate(`/search?q=${encodeURIComponent(query)}`, {
+      state: { skipSearch: true },
+    });
   };
 
   // Header의 검색 핸들러
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setFinalSearch(null); // 일반 검색의 경우 finalSearch 초기화
-    // search(query);
     navigate(`/search?q=${encodeURIComponent(query)}`);
   };
+
+  // const handleStyleChange = async (newStyle: GraphStyle) => {
+  //   setGraphStyle(newStyle);
+  //   if (lastSearchKeyword) {
+  //     await search(lastSearchKeyword, newStyle === "citation");
+  //   }
+  // };
 
   return (
     <Layout>
@@ -186,10 +150,10 @@ export default function Search() {
           className="sticky top-0 z-50 bg-white"
           onSearch={handleSearch}
         />
-        <main className="flex-1 flex flex-col items-center px-10 py-4">
+        <main className="flex-1 flex flex-col items-center px-10 py-4 overflow-hidden">
           <div className="flex flex-row items-start justify-between gap-6 w-full h-full">
             {/* 그래프 섹션 */}
-            <div className="w-1/2 h-full">
+            <div className="w-1/2 h-full flex flex-col">
               {isLoading ? (
                 <div className="text-lg w-full text-center">검색 중...</div>
               ) : error ? (
@@ -197,18 +161,72 @@ export default function Search() {
                   검색 중 오류가 발생했습니다
                 </div>
               ) : (
-                <div className="w-full h-full">
-                  <RadialTree data={treeData} onNodeClick={handleNodeClick} />
+                <div className="flex-1 overflow-y-auto">
+                  {graphStyle === "radial" ? (
+                    <RadialTree data={treeData} onNodeClick={handleNodeClick} />
+                  ) : (
+                    <>
+                      {/* <CitationTree
+                        data={testCitationData}
+                        onNodeClick={handleNodeClick}
+                      /> */}
+                      <SCitationTree
+                        data={treeData}
+                        onNodeClick={handleNodeClick}
+                      />
+                      {/* <MoveTree
+                        data={testCitationData}
+                        onNodeClick={handleNodeClick}
+                      /> */}
+                    </>
+                  )}
+
+                  <div className="flex flex-row justify-between">
+                    <div className="flex flex-row gap-2 items-center text-sm">
+                      <p>스타일</p>
+                      <select
+                        className="border px-2 py-1 rounded cursor-pointer"
+                        value={graphStyle}
+                        onChange={(e) =>
+                          setGraphStyle(e.target.value as GraphStyle)
+                        }
+                      >
+                        <option value="radial">기본</option>
+                        <option value="citation">유사도 반영</option>
+                      </select>
+                    </div>
+
+                    {hasMultipleResults && (
+                      <div className="flex justify-end py-2">
+                        {!isFirstResult && (
+                          <button
+                            onClick={switchToPrevResult}
+                            className="text-sm hover:text-primary px-3 py-1 border rounded hover:bg-gray-100 transition-colors"
+                          >
+                            이전 키워드 보기
+                          </button>
+                        )}
+                        {!isLastResult && (
+                          <button
+                            onClick={switchToNextResult}
+                            className="text-sm hover:text-primary px-3 py-1 rounded border hover:bg-gray-100 transition-colors"
+                          >
+                            다른 키워드 보기
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
             {/* 결과 섹션 */}
-            <div className="w-1/2 h-full overflow-y-auto">
-              {finalSearch ? (
-                <Papers searchQuery={finalSearch} />
+            <div className="w-1/2 h-full">
+              {searchQuery ? (
+                <Papers searchQuery={searchQuery} />
               ) : (
                 <div className="text-center text-lg mt-10">
-                  그래프에서 최종 검색어를 선택하세요
+                  검색어를 입력하거나 그래프에서 선택하세요.
                 </div>
               )}
             </div>

@@ -1,9 +1,7 @@
 import Layout from "../layout/Layout";
 import { useNavigate } from "react-router-dom";
-// import { useState } from "react";
 import enter from "../../public/enter.png";
 import LogoButton from "../components/LogoButton";
-import { useAuth } from "../hooks/useAuth";
 
 import Header from "../components/Header";
 import { useSearchStore } from "../hooks/useStore";
