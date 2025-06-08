@@ -38,23 +38,137 @@ const CitationTree: React.FC<CitationTreeProps> = ({
   useEffect(() => {
     if (!svgRef.current || dimensions.width === 0) return;
 
+    // const radius = dimensions.width / 2;
     const radius = dimensions.width / 2;
-    const maxCitation =
-      d3.max(d3.hierarchy(data).descendants(), (d) => d.data.citation) || 1;
 
     const treeLayout = d3
       .tree<CitationNodeData>()
-      .size([2 * Math.PI, radius - 40])
+      .size([2 * Math.PI, radius])
       .separation((a, b) => {
         const valueDiff = Math.abs(a.data.value - b.data.value);
         return 1 + valueDiff;
       });
 
     const root = d3.hierarchy(data);
+    // 이 부분 추가!
     treeLayout(root);
+
+    // const stepCount = root.height + 1;
+    // const stepRadius = radius / stepCount;
+
+    // [1] citation 기반 반지름 계산 함수
+    const getRadius = (citation: number) => {
+      const minSize = 15;
+      const maxSize = 50;
+      return minSize + (citation / 15) * (maxSize - minSize);
+    };
+    const distanceScale = d3
+      .scaleLinear()
+      .domain([1, 0]) // value=1 → 중심, 0 → 바깥
+      .range([radius * 0.1, radius]);
+
+    root.descendants().forEach((d) => {
+      const point = d as d3.HierarchyPointNode<CitationNodeData>;
+      const r = getRadius(d.data.citation);
+      point.y = distanceScale(d.data.value) + r; // 거리 + 반지름
+    });
+
+    // // [2] 먼저 노드별 반지름을 구해둠
+    // const radiusMap = new Map<d3.HierarchyNode<CitationNodeData>, number>();
+    // root.descendants().forEach((d) => {
+    //   radiusMap.set(d, getRadius(d.data.citation));
+    // });
+
+    // // [3] 위치 보정: 깊이 기반 거리 + value 기반 퍼짐 + 반지름 보정
+    // root.descendants().forEach((d) => {
+    //   const point = d as d3.HierarchyPointNode<CitationNodeData>;
+
+    //   const base = stepRadius * d.depth;
+    //   const offset = stepRadius * Math.pow(1 - d.data.value, 2); // 비선형 퍼짐
+    //   const nodeRadius = radiusMap.get(point) ?? 0;
+
+    //   point.y = base + offset + nodeRadius;
+    // });
+
+    // const MIN_DISTANCE = radius * 0.4; // 중심 최소 거리
+    // const MAX_DISTANCE = radius;
+
+    // const distanceScale = d3
+    //   .scaleLinear()
+    //   .domain([0, 1])
+    //   .range([radius, radius * 0.4]); // ✅ 방향 반전됨
+
+    // root.descendants().forEach((d) => {
+    //   const point = d as d3.HierarchyPointNode<CitationNodeData>;
+    //   point.y = distanceScale(d.data.value); // ⬅ value 기반 거리 재조정
+    // });
+    // const stepCount = root.height + 1; // 예: depth가 0,1,2면 step 3개
+
+    // const stepRadius = radius / stepCount;
+
+    // root.descendants().forEach((d) => {
+    //   const point = d as d3.HierarchyPointNode<CitationNodeData>;
+    //   const value = d.data.value;
+
+    //   // 동일한 value라도 depth에 따라 시작 위치(offset)가 다름
+    //   const base = stepRadius * d.depth;
+    //   const offset = stepRadius * value;
+
+    //   point.y = base + offset;
+    // });
+
+    // const stepCount = root.height + 1;
+    // const stepRadius = radius / stepCount;
+
+    // root.descendants().forEach((d) => {
+    //   const point = d as d3.HierarchyPointNode<CitationNodeData>;
+
+    //   const base = stepRadius * d.depth;
+    //   const offset = stepRadius * (1 - d.data.value); // value가 1일수록 base에 가까움
+    //   point.y = base + offset;
+    // });
+
+    // const stepCount = root.height + 1;
+    // const stepRadius = radius / stepCount;
+    // const EXPONENT = 2; // 값을 키울수록 민감도 증가 (예: 2 ~ 3)
+
+    // root.descendants().forEach((d) => {
+    //   const point = d as d3.HierarchyPointNode<CitationNodeData>;
+
+    //   const base = stepRadius * d.depth;
+    //   const nonlinear = Math.pow(1 - d.data.value, EXPONENT); // 강조
+    //   point.y = base + stepRadius * nonlinear;
+    // });
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
+
+    const blurFilter = svg
+      .append("defs")
+      .append("filter")
+      .attr("id", "edge-blur")
+      .append("feGaussianBlur")
+      .attr("stdDeviation", "5")
+      .attr("result", "blur");
+
+    svg
+      .append("circle")
+      .attr("cx", dimensions.width / 2)
+      .attr("cy", dimensions.height / 2)
+      .attr("r", radius)
+      .attr("fill", "url(#circleGradient)")
+      .attr("stroke", "rgba(255, 255, 255, 0.6)")
+      .attr("stroke-width", 8)
+      .style("filter", "url(#edge-blur)");
+
+    // 필터 정의 추가
+    const filter = svg
+      .append("defs")
+      .append("filter")
+      .attr("id", "blur-effect")
+      .append("feGaussianBlur")
+      .attr("stdDeviation", "2")
+      .attr("result", "blur");
 
     const g = svg
       .append("g")
@@ -64,8 +178,7 @@ const CitationTree: React.FC<CitationTreeProps> = ({
       );
 
     // 링크
-    const link = g
-      .selectAll(".link")
+    g.selectAll(".link")
       .data(root.links())
       .enter()
       .append("path")
@@ -74,15 +187,13 @@ const CitationTree: React.FC<CitationTreeProps> = ({
       .attr("stroke", "#E5E7EB")
       .attr("stroke-width", 1.5)
       .attr("d", (d) => {
-        // 부모 노드의 위치
-        const sourceX = d.source.y * Math.cos(d.source.x - Math.PI / 2);
-        const sourceY = d.source.y * Math.sin(d.source.x - Math.PI / 2);
+        const source = d.source as d3.HierarchyPointNode<CitationNodeData>;
+        const target = d.target as d3.HierarchyPointNode<CitationNodeData>;
 
-        // 자식 노드의 위치 계산 시 value 반영
-        // value가 1에 가까울수록 부모와 가까워지도록 조정
-        const targetDistance = d.target.y * (1 - d.target.data.value);
-        const targetX = targetDistance * Math.cos(d.target.x - Math.PI / 2);
-        const targetY = targetDistance * Math.sin(d.target.x - Math.PI / 2);
+        const sourceX = source.y * Math.cos(source.x - Math.PI / 2);
+        const sourceY = source.y * Math.sin(source.x - Math.PI / 2);
+        const targetX = target.y * Math.cos(target.x - Math.PI / 2);
+        const targetY = target.y * Math.sin(target.x - Math.PI / 2);
 
         return `M${sourceX},${sourceY}L${targetX},${targetY}`;
       });
@@ -103,60 +214,62 @@ const CitationTree: React.FC<CitationTreeProps> = ({
     node
       .append("circle")
       .attr("r", (d) => {
-        // citation 값이 1~50 사이이므로, 이를 적절한 크기로 매핑
-        const minSize = 15; // 최소 크기
-        const maxSize = 35; // 최대 크기
-        const citationSize =
-          minSize + (d.data.citation / 20) * (maxSize - minSize);
-        return citationSize;
+        const minSize = 15;
+        const maxSize = 50;
+        return minSize + (d.data.citation / 50) * (maxSize - minSize);
       })
+      // .attr("r", (d) => d.data.citation * 3)
+
+      // .attr("r", (d) => getRadius(d.data.citation)) // ✅ radiusMap과 동일 로직
       .attr("fill", (d) => {
-        // 계층별 색상 적용
         switch (d.depth) {
-          case 0: // 최상위 계층
-            return "#4B5563"; // 진한 회색
-          case 1: // 중간 계층
-            return "#9CA3AF"; // 중간 회색
-          default: // 최하위 계층
-            return "#D1D5DB"; // 연한 회색
+          case 0:
+            return "#92B44C";
+          case 1:
+            return "#BBD38A";
+          default:
+            return "#E2F1C4";
         }
       })
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 2)
+      // .style("filter", "url(#blur-effect)") // 블러 필터 적용
       .style("cursor", "pointer");
 
-    // 텍스트 크기도 citation 값에 맞게 조정
+    // 텍스트 (foreignObject 방식)
     node
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr("alignment-baseline", "middle")
+      .append("foreignObject")
+      .attr("width", 100)
+      .attr("height", 100)
+      .attr("x", -50)
+      .attr("y", -50)
       .attr("transform", (d) => `rotate(${-((d.x * 180) / Math.PI - 90)})`)
+      .append("xhtml:div")
+      .style("width", "100%")
+      .style("height", "100%")
+      .style("display", "flex")
+      .style("align-items", "center")
+      .style("justify-content", "center")
+      .style("text-align", "center")
       .style("font-size", (d) => {
-        // citation 값이 1~50 사이이므로, 이를 적절한 폰트 크기로 매핑
-        const minSize = 8; // 최소 폰트 크기
-        const maxSize = 16; // 최대 폰트 크기
-        const fontSize = minSize + (d.data.citation / 50) * (maxSize - minSize);
-        return `${fontSize}px`;
+        if (d.depth === 0) return "16px";
+        if (d.depth === 1) return "14px";
+        return "12px";
       })
-      .style("fill", "#000")
+      .style("color", "#000")
       .style("cursor", "pointer")
-      .text((d) => d.data.id);
+      .style("word-wrap", "break-word")
+      .style("overflow-wrap", "break-word")
+      .style("hyphens", "auto")
+      .html((d) => d.data.id);
 
-    // 호버 효과
+    // 호버 & 클릭
     node
       .on("mouseenter", function (event, d) {
-        d3.select(this)
-          .select("text")
-          .style("font-weight", "bold")
-          .style("fill", "#2563EB");
+        d3.select(this).select("foreignObject div").style("color", "#2563EB");
 
         d3.select(this).select("circle").attr("stroke-width", 3);
       })
       .on("mouseleave", function (event, d) {
-        d3.select(this)
-          .select("text")
-          .style("font-weight", "normal")
-          .style("fill", "#000");
+        d3.select(this).select("foreignObject div").style("color", "#000");
 
         d3.select(this).select("circle").attr("stroke-width", 2);
       })
@@ -168,7 +281,7 @@ const CitationTree: React.FC<CitationTreeProps> = ({
   }, [data, dimensions.width, dimensions.height, onNodeClick]);
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div ref={containerRef} className="w-full border">
       <svg
         ref={svgRef}
         width={dimensions.width}
