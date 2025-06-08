@@ -78,7 +78,7 @@ export default function Header({
               <input
                 type="text"
                 placeholder="검색어를 입력하세요"
-                className="flex-1 border-none rounded-md px-7 text-lg focus:outline-none focus:ring-0 bg-transparent"
+                className="flex-1 border-none rounded-md px-5 text-lg focus:outline-none focus:ring-0 bg-transparent"
                 value={localSearchQuery}
                 onChange={(e) => setLocalSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
