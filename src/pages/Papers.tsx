@@ -4,6 +4,7 @@ import { API_BASE_URL } from "../config/constants";
 import { getToken } from "../utils/token";
 import UpIcon from "../components/icons/UpIcon";
 import DownIcon from "../components/icons/DownIcon";
+import { useMemo } from "react";
 
 interface Paper {
   paperId: string;
@@ -15,6 +16,7 @@ interface Paper {
   authors: string[];
   year: number;
   simScore: number;
+  field: string;
 }
 
 interface PapersProps {
@@ -28,6 +30,17 @@ export default function Papers({ searchQuery }: PapersProps) {
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<string>>(
     new Set()
   );
+  const [sortKey, setSortKey] = useState<"simScore" | "citationCount" | "year">(
+    "simScore"
+  );
+  const allYears = papers.map((p) => p.year);
+  const minAvailableYear = Math.min(...allYears);
+  const maxAvailableYear = Math.max(...allYears);
+
+  const [yearRange, setYearRange] = useState<[number, number]>([
+    minAvailableYear,
+    maxAvailableYear,
+  ]);
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -65,6 +78,26 @@ export default function Papers({ searchQuery }: PapersProps) {
       fetchPapers();
     }
   }, [searchQuery]);
+
+  const sortedPapers = useMemo(() => {
+    return [...papers].sort((a, b) => {
+      switch (sortKey) {
+        case "citationCount":
+          return b.citationCount - a.citationCount;
+        case "year":
+          return b.year - a.year;
+        case "simScore":
+        default:
+          return b.simScore - a.simScore;
+      }
+    });
+  }, [papers, sortKey]);
+
+  const filteredPapers = useMemo(() => {
+    return sortedPapers.filter(
+      (p) => p.year >= yearRange[0] && p.year <= yearRange[1]
+    );
+  }, [sortedPapers, yearRange]);
 
   const handlePaperClick = async (paper: Paper) => {
     try {
@@ -119,11 +152,42 @@ export default function Papers({ searchQuery }: PapersProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex w-full bg-gray-100 rounded-md items-center justify-start py-1 px-4 font-normal text-lg mb-3">
-        "{searchQuery}" 검색 결과
+      <div className="flex w-full bg-gray-100 rounded-md items-center justify-between py-1 px-4 font-normal text-lg mb-3">
+        <div>"{searchQuery}" 검색 결과</div>
+        <div>
+          <span className="text-sm">정렬 기준</span>
+          <select
+            className="text-sm bg-white border border-gray-300 rounded px-2 py-0.5 ml-2"
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+          >
+            <option value="simScore">유사도</option>
+            <option value="citationCount">인용수</option>
+            <option value="year">연도</option>
+          </select>
+        </div>
       </div>
+      <div className="flex items-center gap-2 text-sm text-gray-700 mb-2">
+        <span>{yearRange[0]}</span>
+        <input
+          type="range"
+          min={minAvailableYear}
+          max={maxAvailableYear}
+          value={yearRange[0]}
+          onChange={(e) => setYearRange([+e.target.value, yearRange[1]])}
+        />
+        <input
+          type="range"
+          min={minAvailableYear}
+          max={maxAvailableYear}
+          value={yearRange[1]}
+          onChange={(e) => setYearRange([yearRange[0], +e.target.value])}
+        />
+        <span>{yearRange[1]}</span>
+      </div>
+
       <div className="space-y-3 overflow-y-auto flex-1">
-        {papers.map((paper) => (
+        {filteredPapers.map((paper) => (
           <div
             key={paper.paperId}
             className="block bg-white p-2 rounded-lg hover:bg-gray-50 transition-colors overflow-y-auto"
@@ -136,7 +200,7 @@ export default function Papers({ searchQuery }: PapersProps) {
                 onClick={() => handlePaperClick(paper)}
                 className="flex-1"
               >
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-lg font-medium">
                   <span className="text-gray-900 hover:text-primary hover:underline transition-colors duration-100">
                     {paper.title}
                   </span>
@@ -146,6 +210,8 @@ export default function Papers({ searchQuery }: PapersProps) {
                 <span className="text-sm text-gray-500">
                   인용수: {paper.citationCount}
                 </span>
+                <span className="text-sm text-gray-500">|</span>
+                <span className="text-sm text-gray-500">{paper.field}</span>
                 <span className="text-sm text-gray-500">|</span>
                 <span className="text-sm text-gray-500">{paper.year}년</span>
                 <span className="text-sm text-gray-500">|</span>
@@ -160,7 +226,9 @@ export default function Papers({ searchQuery }: PapersProps) {
               {paper.abstractText && (
                 <>
                   {expandedAbstracts.has(paper.paperId) && (
-                    <p className="text-gray-700 mt-2">{paper.abstractText}</p>
+                    <p className="text-gray-700 mt-2 text-sm">
+                      {paper.abstractText}
+                    </p>
                   )}
                   <button
                     onClick={() => toggleAbstract(paper.paperId)}
