@@ -5,6 +5,7 @@ import { getToken } from "../utils/token";
 import UpIcon from "../components/icons/UpIcon";
 import DownIcon from "../components/icons/DownIcon";
 import { useMemo } from "react";
+// import { Range } from "react-range";
 
 interface Paper {
   paperId: string;
@@ -33,14 +34,6 @@ export default function Papers({ searchQuery }: PapersProps) {
   const [sortKey, setSortKey] = useState<"simScore" | "citationCount" | "year">(
     "simScore"
   );
-  const allYears = papers.map((p) => p.year);
-  const minAvailableYear = Math.min(...allYears);
-  const maxAvailableYear = Math.max(...allYears);
-
-  const [yearRange, setYearRange] = useState<[number, number]>([
-    minAvailableYear,
-    maxAvailableYear,
-  ]);
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -93,11 +86,11 @@ export default function Papers({ searchQuery }: PapersProps) {
     });
   }, [papers, sortKey]);
 
-  const filteredPapers = useMemo(() => {
-    return sortedPapers.filter(
-      (p) => p.year >= yearRange[0] && p.year <= yearRange[1]
-    );
-  }, [sortedPapers, yearRange]);
+  // const filteredPapers = useMemo(() => {
+  //   return sortedPapers.filter(
+  //     (p) => p.year >= yearRange[0] && p.year <= yearRange[1]
+  //   );
+  // }, [sortedPapers, yearRange]);
 
   const handlePaperClick = async (paper: Paper) => {
     try {
@@ -152,7 +145,7 @@ export default function Papers({ searchQuery }: PapersProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex w-full bg-gray-100 rounded-md items-center justify-between py-1 px-4 font-normal text-lg mb-3">
+      <div className="flex w-full bg-gray-100 rounded-md items-center justify-between py-1 px-4 font-normal text-md mb-3">
         <div>"{searchQuery}" 검색 결과</div>
         <div>
           <span className="text-sm">정렬 기준</span>
@@ -167,32 +160,54 @@ export default function Papers({ searchQuery }: PapersProps) {
           </select>
         </div>
       </div>
-      <div className="flex items-center gap-2 text-sm text-gray-700 mb-2">
-        <span>{yearRange[0]}</span>
-        <input
-          type="range"
+      {/* <div className="w-[250px]">
+        <Range
+          values={yearRange}
+          step={1}
           min={minAvailableYear}
           max={maxAvailableYear}
-          value={yearRange[0]}
-          onChange={(e) => setYearRange([+e.target.value, yearRange[1]])}
+          onChange={(values) => setYearRange(values as [number, number])}
+          renderTrack={({ props, children }) => (
+            <div
+              {...props}
+              style={{
+                ...props.style,
+                height: "5px",
+                background: "#ddd",
+                borderRadius: "4px",
+              }}
+            >
+              {children}
+            </div>
+          )}
+          renderThumb={({ props, index }) => (
+            <div
+              {...props}
+              style={{
+                height: "20px",
+                width: "20px",
+                borderRadius: "50%",
+                backgroundColor: "#4F46E5",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontSize: "12px",
+              }}
+            >
+              {yearRange[index]}
+            </div>
+          )}
         />
-        <input
-          type="range"
-          min={minAvailableYear}
-          max={maxAvailableYear}
-          value={yearRange[1]}
-          onChange={(e) => setYearRange([yearRange[0], +e.target.value])}
-        />
-        <span>{yearRange[1]}</span>
-      </div>
+      </div> */}
 
       <div className="space-y-3 overflow-y-auto flex-1">
-        {filteredPapers.map((paper) => (
+        {sortedPapers.map((paper) => (
           <div
             key={paper.paperId}
             className="block bg-white p-2 rounded-lg hover:bg-gray-50 transition-colors overflow-y-auto"
           >
-            <div className="flex justify-between items-start">
+            <div className="flex justify-start items-start">
               <a
                 href={paper.pdfUrl}
                 target="_blank"
@@ -200,29 +215,32 @@ export default function Papers({ searchQuery }: PapersProps) {
                 onClick={() => handlePaperClick(paper)}
                 className="flex-1"
               >
-                <h3 className="text-lg font-medium">
+                <h3 className="text-md font-medium">
                   <span className="text-gray-900 hover:text-primary hover:underline transition-colors duration-100">
                     {paper.title}
                   </span>
                 </h3>
               </a>
-              <div className="flex items-center gap-2 ml-4">
-                <span className="text-sm text-gray-500">
-                  인용수: {paper.citationCount}
-                </span>
-                <span className="text-sm text-gray-500">|</span>
-                <span className="text-sm text-gray-500">{paper.field}</span>
-                <span className="text-sm text-gray-500">|</span>
-                <span className="text-sm text-gray-500">{paper.year}년</span>
-                <span className="text-sm text-gray-500">|</span>
-                <span className="text-sm text-primary">
-                  유사도: {paper.simScore.toFixed(2)}
-                </span>
-              </div>
             </div>
-            <p className="text-gray-600 mb-1">{paper.authors.join(", ")}</p>
+            <p className="text-gray-600 mb-1 text-sm">
+              {paper.authors.join(", ")}
+            </p>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-gray-500">
+                인용수: {paper.citationCount}
+              </span>
+              <span className="text-gray-500">|</span>
+              <span className="text-gray-500">{paper.field}</span>
+              <span className="text-gray-500">|</span>
+              <span className="text-gray-500">{paper.year}년</span>
+              <span className="text-gray-500">|</span>
+              <span className="text-primary">
+                유사도: {paper.simScore.toFixed(2)}
+              </span>
+            </div>
             <div>
-              <p className="text-gray-700">{paper.summary}</p>
+              <p className="text-gray-700 text-sm">{paper.summary}</p>
+
               {paper.abstractText && (
                 <>
                   {expandedAbstracts.has(paper.paperId) && (
@@ -232,15 +250,15 @@ export default function Papers({ searchQuery }: PapersProps) {
                   )}
                   <button
                     onClick={() => toggleAbstract(paper.paperId)}
-                    className="text-sm text-primary-500 hover:font-medium flex items-center gap-1 mt-1"
+                    className="text-xs text-primary-500 hover:font-medium flex items-center gap-1 mt-1"
                   >
                     {expandedAbstracts.has(paper.paperId)
                       ? "초록 접기"
                       : "초록 보기"}
                     {expandedAbstracts.has(paper.paperId) ? (
-                      <UpIcon className="w-3 h-3 text-primary-500" />
+                      <UpIcon className="w-[10px] text-primary-500" />
                     ) : (
-                      <DownIcon className="w-3 h-3 text-primary-500" />
+                      <DownIcon className="w-[10px] text-primary-500" />
                     )}
                   </button>
                 </>
