@@ -165,17 +165,45 @@ const CitationTree: React.FC<TreeProps> = ({ data, onNodeClick }) => {
       .attr("stroke-width", 2)
       .style("cursor", "pointer");
 
+    // node
+    //   .append("text")
+    //   .attr("text-anchor", "middle")
+    //   .attr("alignment-baseline", "middle")
+    //   .attr("transform", (d) => `rotate(${-(d.x ?? 0) * (180 / Math.PI) + 90})`)
+    //   .style("font-size", (d) =>
+    //     d.depth === 0 ? "16px" : d.depth === 1 ? "14px" : "12px"
+    //   )
+    //   .style("fill", "#000")
+    //   .text((d) => d.data.id)
+    //   .style("pointer-events", "none");
     node
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr("alignment-baseline", "middle")
-      .attr("transform", (d) => `rotate(${-(d.x ?? 0) * (180 / Math.PI) + 90})`)
-      .style("font-size", (d) =>
-        d.depth === 0 ? "16px" : d.depth === 1 ? "14px" : "12px"
-      )
-      .style("fill", "#000")
-      .text((d) => d.data.id)
-      .style("pointer-events", "none");
+      .append("foreignObject")
+      .attr("width", 100) // 고정 너비
+      .attr("height", 100) // 고정 높이
+      .attr("x", -50) // 중앙 정렬을 위해 width의 절반
+      .attr("y", -50) // 중앙 정렬을 위해 height의 절반
+      .append("xhtml:div")
+      .style("transform", (d) => {
+        const angle = -(d.x ?? 0) * (180 / Math.PI) + 90;
+        return `rotate(${angle}deg)`;
+      }) // 역회전 적용
+      .style("width", "100%")
+      .style("height", "100%")
+      .style("display", "flex")
+      .style("align-items", "center")
+      .style("justify-content", "center")
+      .style("text-align", "center")
+      .style("font-size", (d) => {
+        if (d.depth === 0) return "16px";
+        if (d.depth === 1) return "14px";
+        return "12px";
+      })
+      .style("color", "#000")
+      .style("cursor", "pointer")
+      .style("word-wrap", "break-word")
+      .style("overflow-wrap", "break-word")
+      .style("hyphens", "auto")
+      .html((d) => d.data.id);
 
     node
       .on("mouseenter", function (event, d) {
