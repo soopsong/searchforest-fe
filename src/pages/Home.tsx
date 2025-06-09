@@ -1,8 +1,7 @@
 import Layout from "../layout/Layout";
 import { useNavigate } from "react-router-dom";
-import enter from "../../public/enter.png";
+import enter from "../assets/enter.png";
 import LogoButton from "../components/icons/LogoButton";
-
 import Header from "../components/Header";
 import { useSearchStore } from "../hooks/useStore";
 

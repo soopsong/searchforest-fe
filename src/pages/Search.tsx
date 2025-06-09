@@ -5,69 +5,69 @@ import { useSearch } from "../hooks/useSearch";
 import Header from "../components/Header";
 import { useSearchStore } from "../hooks/useStore";
 import Layout from "../layout/Layout";
-import Papers from "./Papers";
-import CitationTree from "../components/graphs/CitationTree";
+// import Papers from "./Papers";
+// import CitationTree from "../components/graphs/CitationTree";
 import { GraphStyle } from "../types/tree";
 import SCitationTree from "../components/graphs/SCitationTree";
 import SPapers from "./sPapers";
 
-const testCitationData = {
-  id: "language model",
-  value: 1.0,
-  citation: 30,
-  children: [
-    {
-      id: "transformer",
-      value: 1,
-      citation: 10,
-      children: [
-        { id: "self-attention", value: 0.6, citation: 5 },
-        { id: "multi-head attention", value: 0.5, citation: 3 },
-        { id: "positional encoding", value: 0.4, citation: 2 },
-      ],
-    },
-    {
-      id: "pretrained model",
-      value: 0.6,
-      citation: 15,
-      children: [
-        { id: "bert", value: 0.7, citation: 5 },
-        { id: "gpt", value: 0.6, citation: 3 },
-        { id: "electra", value: 0.4, citation: 2 },
-      ],
-    },
-    {
-      id: "masked language modeling",
-      value: 0.3,
-      citation: 30,
-      children: [
-        { id: "token masking", value: 0.6, citation: 5 },
-        { id: "mlm objective", value: 0.5, citation: 3 },
-        { id: "context prediction", value: 0.5, citation: 2 },
-      ],
-    },
-    {
-      id: "fine-tuning",
-      value: 0.85,
-      citation: 10,
-      children: [
-        { id: "task adaptation", value: 0.1, citation: 5 },
-        { id: "domain transfer", value: 0.9, citation: 10 },
-        { id: "parameter-efficient tuning", value: 0.5, citation: 2 },
-      ],
-    },
-    {
-      id: "causal language modeling",
-      value: 0.85,
-      citation: 10,
-      children: [
-        { id: "autoregressive model", value: 0.6, citation: 5 },
-        { id: "next token prediction", value: 0.5, citation: 3 },
-        { id: "gpt decoder", value: 0.7, citation: 27 },
-      ],
-    },
-  ],
-};
+// const testCitationData = {
+//   id: "language model",
+//   value: 1.0,
+//   citation: 30,
+//   children: [
+//     {
+//       id: "transformer",
+//       value: 1,
+//       citation: 10,
+//       children: [
+//         { id: "self-attention", value: 0.6, citation: 5 },
+//         { id: "multi-head attention", value: 0.5, citation: 3 },
+//         { id: "positional encoding", value: 0.4, citation: 2 },
+//       ],
+//     },
+//     {
+//       id: "pretrained model",
+//       value: 0.6,
+//       citation: 15,
+//       children: [
+//         { id: "bert", value: 0.7, citation: 5 },
+//         { id: "gpt", value: 0.6, citation: 3 },
+//         { id: "electra", value: 0.4, citation: 2 },
+//       ],
+//     },
+//     {
+//       id: "masked language modeling",
+//       value: 0.3,
+//       citation: 30,
+//       children: [
+//         { id: "token masking", value: 0.6, citation: 5 },
+//         { id: "mlm objective", value: 0.5, citation: 3 },
+//         { id: "context prediction", value: 0.5, citation: 2 },
+//       ],
+//     },
+//     {
+//       id: "fine-tuning",
+//       value: 0.85,
+//       citation: 10,
+//       children: [
+//         { id: "task adaptation", value: 0.1, citation: 5 },
+//         { id: "domain transfer", value: 0.9, citation: 10 },
+//         { id: "parameter-efficient tuning", value: 0.5, citation: 2 },
+//       ],
+//     },
+//     {
+//       id: "causal language modeling",
+//       value: 0.85,
+//       citation: 10,
+//       children: [
+//         { id: "autoregressive model", value: 0.6, citation: 5 },
+//         { id: "next token prediction", value: 0.5, citation: 3 },
+//         { id: "gpt decoder", value: 0.7, citation: 27 },
+//       ],
+//     },
+//   ],
+// };
 
 export default function Search() {
   const navigate = useNavigate();

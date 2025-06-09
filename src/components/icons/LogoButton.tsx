@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import logo from "../../../public/reSearchForest.png";
+import logo from "../../assets/reSearchForest.png";
 import { useSearchStore } from "../../hooks/useStore";
 
 interface LogoButtonProps {

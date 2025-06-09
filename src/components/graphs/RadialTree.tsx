@@ -11,8 +11,8 @@ interface RadialTreeProps {
 
 const RadialTree: React.FC<RadialTreeProps> = ({
   data,
-  width,
-  height,
+  // width,
+  // height,
   onNodeClick,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -75,7 +75,7 @@ const RadialTree: React.FC<RadialTreeProps> = ({
     //   .attr("stop-color", "white");
 
     // 블러 필터 강화
-    const blurFilter = svg
+    svg
       .append("defs")
       .append("filter")
       .attr("id", "edge-blur")
@@ -88,13 +88,13 @@ const RadialTree: React.FC<RadialTreeProps> = ({
       .attr("cx", dimensions.width / 2)
       .attr("cy", dimensions.height / 2)
       .attr("r", radius)
-      .attr("fill", "url(#circleGradient)")
+      .attr("fill", "transparent")
       .attr("stroke", "rgba(255, 255, 255, 0.6)")
       .attr("stroke-width", 8)
       .style("filter", "url(#edge-blur)");
 
     // 필터 정의 추가
-    const filter = svg
+    svg
       .append("defs")
       .append("filter")
       .attr("id", "blur-effect")
@@ -110,8 +110,7 @@ const RadialTree: React.FC<RadialTreeProps> = ({
       );
 
     // 링크
-    const link = g
-      .selectAll(".link")
+    g.selectAll(".link")
       .data(root.links())
       .enter()
       .append("path")
@@ -223,7 +222,7 @@ const RadialTree: React.FC<RadialTreeProps> = ({
 
     // 호버 효과 수정
     node
-      .on("mouseenter", function (event, d) {
+      .on("mouseenter", function () {
         d3.select(this)
           .select("foreignObject div")
           // .style("font-weight", "semibold")
@@ -231,7 +230,7 @@ const RadialTree: React.FC<RadialTreeProps> = ({
 
         d3.select(this).select("circle").attr("stroke-width", 3);
       })
-      .on("mouseleave", function (event, d) {
+      .on("mouseleave", function () {
         d3.select(this)
           .select("foreignObject div")
           .style("font-weight", "normal")
@@ -239,7 +238,7 @@ const RadialTree: React.FC<RadialTreeProps> = ({
 
         d3.select(this).select("circle").attr("stroke-width", 2);
       })
-      .on("click", (event, d) => {
+      .on("click", (_, d) => {
         if (onNodeClick) {
           onNodeClick(d.data.id);
         }

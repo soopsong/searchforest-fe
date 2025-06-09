@@ -220,12 +220,12 @@ const CitationTree: React.FC<TreeProps> = ({ data, onNodeClick }) => {
           .style("left", `${event.pageX + 10}px`)
           .style("top", `${event.pageY - 20}px`);
       })
-      .on("mouseleave", function (event, d) {
+      .on("mouseleave", function () {
         d3.select(this).select("text").style("fill", "#000");
         d3.select(this).select("circle").attr("stroke-width", 2);
         tooltip.style("opacity", 0);
       })
-      .on("click", (event, d) => {
+      .on("click", (_, d) => {
         if (onNodeClick) {
           onNodeClick(d.data.id);
         }
