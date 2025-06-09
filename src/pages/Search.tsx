@@ -1,4 +1,4 @@
-import RadialTree from "../components/RadialTree";
+import RadialTree from "../components/graphs/RadialTree";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSearch } from "../hooks/useSearch";
@@ -6,10 +6,11 @@ import Header from "../components/Header";
 import { useSearchStore } from "../hooks/useStore";
 import Layout from "../layout/Layout";
 import Papers from "./Papers";
-import CitationTree from "../components/CitationTree";
+import CitationTree from "../components/graphs/CitationTree";
 import { GraphStyle, CitationNodeData } from "../types/tree";
 import MoveTree from "../components/MoveTree";
-import SCitationTree from "../components/SCitationTree";
+import SCitationTree from "../components/graphs/SCitationTree";
+import SPapers from "./sPapers";
 
 const testCitationData = {
   id: "language model",
@@ -135,13 +136,6 @@ export default function Search() {
     navigate(`/search?q=${encodeURIComponent(query)}`);
   };
 
-  // const handleStyleChange = async (newStyle: GraphStyle) => {
-  //   setGraphStyle(newStyle);
-  //   if (lastSearchKeyword) {
-  //     await search(lastSearchKeyword, newStyle === "citation");
-  //   }
-  // };
-
   return (
     <Layout>
       <div className="flex flex-col w-full h-full">
@@ -150,7 +144,7 @@ export default function Search() {
           className="sticky top-0 z-50 bg-white"
           onSearch={handleSearch}
         />
-        <main className="flex-1 flex flex-col items-center px-10 py-4 overflow-hidden">
+        <main className="flex-1 flex flex-col items-center px-10 pb-4 overflow-hidden">
           <div className="flex flex-row items-start justify-between gap-6 w-full h-full">
             {/* 그래프 섹션 */}
             <div className="w-1/2 h-full flex flex-col">
@@ -162,25 +156,6 @@ export default function Search() {
                 </div>
               ) : (
                 <div className="flex-1 overflow-y-auto">
-                  {graphStyle === "radial" ? (
-                    <RadialTree data={treeData} onNodeClick={handleNodeClick} />
-                  ) : (
-                    <>
-                      {/* <CitationTree
-                        data={testCitationData}
-                        onNodeClick={handleNodeClick}
-                      /> */}
-                      <SCitationTree
-                        data={treeData}
-                        onNodeClick={handleNodeClick}
-                      />
-                      {/* <MoveTree
-                        data={testCitationData}
-                        onNodeClick={handleNodeClick}
-                      /> */}
-                    </>
-                  )}
-
                   <div className="flex flex-row justify-between">
                     <div className="flex flex-row gap-2 items-center text-sm">
                       <p>스타일</p>
@@ -217,13 +192,32 @@ export default function Search() {
                       </div>
                     )}
                   </div>
+                  {graphStyle === "radial" ? (
+                    <RadialTree data={treeData} onNodeClick={handleNodeClick} />
+                  ) : (
+                    <>
+                      {/* <CitationTree
+                        data={testCitationData}
+                        onNodeClick={handleNodeClick}
+                      /> */}
+                      <SCitationTree
+                        data={treeData}
+                        onNodeClick={handleNodeClick}
+                      />
+                      {/* <MoveTree
+                        data={testCitationData}
+                        onNodeClick={handleNodeClick}
+                      /> */}
+                    </>
+                  )}
                 </div>
               )}
             </div>
             {/* 결과 섹션 */}
             <div className="w-1/2 h-full">
               {searchQuery ? (
-                <Papers searchQuery={searchQuery} />
+                // <Papers searchQuery={searchQuery} />
+                <SPapers searchQuery={searchQuery} />
               ) : (
                 <div className="text-center text-lg mt-10">
                   검색어를 입력하거나 그래프에서 선택하세요.

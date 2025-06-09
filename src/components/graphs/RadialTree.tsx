@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { NodeData } from "../types/tree";
+import { NodeData } from "../../types/tree";
 
 interface RadialTreeProps {
   data: NodeData;

@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import history from "../../public/history.svg";
 import logoutIcon from "../../public/logout.svg";
-import LogoButton from "./LogoButton";
+import LogoButton from "./icons/LogoButton";
 import { useSearchStore } from "../hooks/useStore";
 import { useAuthStore } from "../hooks/useStore";
 import { useAuth } from "../hooks/useAuth";
@@ -68,7 +68,7 @@ export default function Header({
   if (variant === "search") {
     return (
       <header
-        className={`flex flex-row items-center justify-between py-5 px-10 w-full gap-10 ${className}`}
+        className={`flex flex-row items-center justify-between py-4 px-10 w-full gap-10 ${className}`}
       >
         <div className="flex flex-row gap-5 flex-1">
           <LogoButton className="w-52" />

@@ -5,7 +5,6 @@ import { getToken } from "../utils/token";
 import UpIcon from "../components/icons/UpIcon";
 import DownIcon from "../components/icons/DownIcon";
 import { useMemo } from "react";
-// import { Range } from "react-range";
 
 interface Paper {
   paperId: string;
@@ -160,46 +159,6 @@ export default function Papers({ searchQuery }: PapersProps) {
           </select>
         </div>
       </div>
-      {/* <div className="w-[250px]">
-        <Range
-          values={yearRange}
-          step={1}
-          min={minAvailableYear}
-          max={maxAvailableYear}
-          onChange={(values) => setYearRange(values as [number, number])}
-          renderTrack={({ props, children }) => (
-            <div
-              {...props}
-              style={{
-                ...props.style,
-                height: "5px",
-                background: "#ddd",
-                borderRadius: "4px",
-              }}
-            >
-              {children}
-            </div>
-          )}
-          renderThumb={({ props, index }) => (
-            <div
-              {...props}
-              style={{
-                height: "20px",
-                width: "20px",
-                borderRadius: "50%",
-                backgroundColor: "#4F46E5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontSize: "12px",
-              }}
-            >
-              {yearRange[index]}
-            </div>
-          )}
-        />
-      </div> */}
 
       <div className="space-y-3 overflow-y-auto flex-1">
         {sortedPapers.map((paper) => (

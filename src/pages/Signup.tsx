@@ -1,7 +1,7 @@
 import Layout from "../layout/Layout";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import LogoButton from "../components/LogoButton";
+import LogoButton from "../components/icons/LogoButton";
 import { API_BASE_URL } from "../config/constants";
 
 export default function Signup() {
