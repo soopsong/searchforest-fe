@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { CitationNodeData } from "../../types/tree";
+import { NodeData } from "../../types/tree";
 
-interface CitationTreeProps {
-  data: CitationNodeData;
+interface TreeProps {
+  data: NodeData;
   width?: number;
   height?: number;
   onNodeClick?: (text: string) => void;
 }
 
-interface PositionedNode extends d3.HierarchyNode<CitationNodeData> {
+interface PositionedNode extends d3.HierarchyNode<NodeData> {
   x?: number; // angle (radian)
   y?: number; // radius
 }
 
-const CitationTree: React.FC<CitationTreeProps> = ({ data, onNodeClick }) => {
+const CitationTree: React.FC<TreeProps> = ({ data, onNodeClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -40,8 +40,7 @@ const CitationTree: React.FC<CitationTreeProps> = ({ data, onNodeClick }) => {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const root = d3.hierarchy<CitationNodeData>(data);
-    const maxDepth = root.height;
+    const root = d3.hierarchy<NodeData>(data);
 
     function assignPolarPosition(
       node: PositionedNode,
@@ -51,20 +50,15 @@ const CitationTree: React.FC<CitationTreeProps> = ({ data, onNodeClick }) => {
       parentRadius: number
     ) {
       const angle = (startAngle + endAngle) / 2;
-      // const rScale = d3
-      //   .scaleLinear()
-      //   .domain([0, maxDepth])
-      //   .range([radius * 0.1, radius]);
       node.x = angle;
-      // node.y = rScale(depth);
 
-      const offset = d3
+      const offsetScale = d3
         .scalePow()
-        .exponent(2.5)
+        .exponent(3.0)
         .domain([1, 0])
-        .range([20, 200])(node.data.value); // value 작을수록 offset ↑
+        .range([radius * 0.1, radius * 0.9]);
 
-      node.y = parentRadius + offset;
+      node.y = parentRadius + offsetScale(node.data.value);
 
       const children = node.children || [];
       const anglePerChild =
@@ -82,7 +76,8 @@ const CitationTree: React.FC<CitationTreeProps> = ({ data, onNodeClick }) => {
 
     assignPolarPosition(root as PositionedNode, 0, 2 * Math.PI, 0, 0);
 
-    const g = svg
+    const zoomWrapper = svg.append("g").attr("class", "zoom-wrapper");
+    const graphContainer = zoomWrapper
       .append("g")
       .attr("class", "graph-container")
       .attr(
@@ -95,11 +90,12 @@ const CitationTree: React.FC<CitationTreeProps> = ({ data, onNodeClick }) => {
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.5, 5])
         .on("zoom", (event) => {
-          g.attr("transform", event.transform);
+          zoomWrapper.attr("transform", event.transform);
         })
     );
 
-    g.selectAll(".link")
+    graphContainer
+      .selectAll(".link")
       .data(root.links())
       .enter()
       .append("path")
@@ -119,7 +115,7 @@ const CitationTree: React.FC<CitationTreeProps> = ({ data, onNodeClick }) => {
         return `M${sx},${sy}L${tx},${ty}`;
       });
 
-    const node = g
+    const node = graphContainer
       .selectAll(".node")
       .data(root.descendants())
       .enter()
@@ -139,9 +135,21 @@ const CitationTree: React.FC<CitationTreeProps> = ({ data, onNodeClick }) => {
       return minSize + (citation / maxCitation) * (maxSize - minSize);
     };
 
+    // Tooltip container
+    const tooltip = d3
+      .select(containerRef.current)
+      .append("div")
+      .style("position", "absolute")
+      .style("padding", "4px 6px")
+      .style("background-color", "rgba(107, 114, 128, 0.5)") // 투명도 있는 회색 (#6B7280)
+      .style("color", "#fff")
+      .style("border-radius", "6px")
+      .style("font-size", "13px")
+      .style("pointerEvents", "none")
+      .style("opacity", 0);
+
     node
       .append("circle")
-      // .attr("r", (d) => 15 + (d.data.citation / 20) * 35)
       .attr("r", (d) => getRadius(d.data.citation))
       .attr("fill", (d) => {
         switch (d.depth) {
@@ -173,10 +181,21 @@ const CitationTree: React.FC<CitationTreeProps> = ({ data, onNodeClick }) => {
       .on("mouseenter", function (event, d) {
         d3.select(this).select("text").style("fill", "#2563EB");
         d3.select(this).select("circle").attr("stroke-width", 3);
+        tooltip
+          .style("opacity", 1)
+          .html(`총 인용수: ${d.data.citation}`)
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY - 20}px`);
+      })
+      .on("mousemove", function (event) {
+        tooltip
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY - 20}px`);
       })
       .on("mouseleave", function (event, d) {
         d3.select(this).select("text").style("fill", "#000");
         d3.select(this).select("circle").attr("stroke-width", 2);
+        tooltip.style("opacity", 0);
       })
       .on("click", (event, d) => {
         if (onNodeClick) {
