@@ -7,8 +7,7 @@ import { useSearchStore } from "../hooks/useStore";
 import Layout from "../layout/Layout";
 import Papers from "./Papers";
 import CitationTree from "../components/graphs/CitationTree";
-import { GraphStyle, CitationNodeData } from "../types/tree";
-import MoveTree from "../components/MoveTree";
+import { GraphStyle } from "../types/tree";
 import SCitationTree from "../components/graphs/SCitationTree";
 import SPapers from "./sPapers";
 
@@ -76,7 +75,6 @@ export default function Search() {
   const location = useLocation();
   const {
     treeData,
-    // citationTreeData,
     isLoading,
     error,
     search,
@@ -204,10 +202,6 @@ export default function Search() {
                         data={treeData}
                         onNodeClick={handleNodeClick}
                       />
-                      {/* <MoveTree
-                        data={testCitationData}
-                        onNodeClick={handleNodeClick}
-                      /> */}
                     </>
                   )}
                 </div>

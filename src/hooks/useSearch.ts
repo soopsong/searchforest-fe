@@ -37,25 +37,8 @@ interface TreeData {
   }>;
 }
 
-interface CitationTreeData {
-  id: string;
-  value: number;
-  citation: number;
-  children: Array<{
-    id: string;
-    value: number;
-    citation: number;
-    children: Array<{
-      id: string;
-      value: number;
-      citation: number;
-    }>;
-  }>;
-}
-
 interface UseSearchReturn {
   treeData: TreeData;
-  // citationTreeData: CitationTreeData;
   isLoading: boolean;
   error: Error | null;
   search: (keyword: string) => Promise<void>;
@@ -88,26 +71,6 @@ const transformToTreeData = (data: SearchResponse): TreeData => {
   };
 };
 
-const transformToCitationTreeData = (
-  data: SearchResponse
-): CitationTreeData => {
-  return {
-    id: data.text,
-    value: data.weight,
-    citation: data.totalCitation || 0,
-    children: data.sublist.map((item) => ({
-      id: item.text,
-      value: item.weight,
-      citation: item.totalCitation || 0,
-      children: item.sublist.map((subItem) => ({
-        id: subItem.text,
-        value: subItem.weight,
-        citation: subItem.totalCitation || 0,
-      })),
-    })),
-  };
-};
-
 export const useSearch = (): UseSearchReturn => {
   const [treeData, setTreeData] = useState<TreeData>({
     id: "language model",
@@ -115,12 +78,6 @@ export const useSearch = (): UseSearchReturn => {
     citation: 10,
     children: [],
   });
-  // const [citationTreeData, setCitationTreeData] = useState<CitationTreeData>({
-  //   id: "language model",
-  //   value: 1.0,
-  //   citation: 2,
-  //   children: [],
-  // });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [lastSearchKeyword, setLastSearchKeyword] = useState<string | null>(
@@ -161,17 +118,9 @@ export const useSearch = (): UseSearchReturn => {
       setSearchGraph(response.data);
       setRootSessionId(response.data[0].sessionId);
 
-      // 첫 번째 결과로 트리 데이터 변환
-      // const transformedData = isCitation
-      //   ? transformToCitationTreeData(response.data[0])
-      //   : transformToTreeData(response.data[0]);
       const transformedData = transformToTreeData(response.data[0]);
 
-      // if (isCitation) {
-      //   setCitationTreeData(transformedData as CitationTreeData);
-      // } else {
       setTreeData(transformedData);
-      // }
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("검색 중 오류가 발생했습니다")
@@ -214,17 +163,9 @@ export const useSearch = (): UseSearchReturn => {
       );
       setSearchGraph(response.data);
 
-      // const transformedData = isCitation
-      //   ? transformToCitationTreeData(response.data[0])
-      //   : transformToTreeData(response.data[0]);
       const transformedData = transformToTreeData(response.data[0]);
       setTreeData(transformedData);
 
-      // if (isCitation) {
-      //   setCitationTreeData(transformedData as CitationTreeData);
-      // } else {
-      //   setTreeData(transformedData);
-      // }
       console.log("노드 검색 응답데이터: ", response.data);
     } catch (err) {
       setError(
@@ -294,16 +235,6 @@ export const useSearch = (): UseSearchReturn => {
     setRootSessionId(nextResult.sessionId);
     const transformedData = transformToTreeData(nextResult);
     setTreeData(transformedData);
-    // const transformedData =
-    //   graphStyle === "citation"
-    //     ? transformToCitationTreeData(nextResult)
-    //     : transformToTreeData(nextResult);
-
-    // if (graphStyle === "citation") {
-    //   setCitationTreeData(transformedData as CitationTreeData);
-    // } else {
-    //   setTreeData(transformedData);
-    // }
   };
 
   // 이전 결과로 전환하는 함수
