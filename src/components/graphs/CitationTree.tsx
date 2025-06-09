@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { CitationNodeData } from "../types/tree";
+import { CitationNodeData } from "../../types/tree";
 
 interface CitationTreeProps {
   data: CitationNodeData;
