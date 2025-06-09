@@ -1,5 +1,4 @@
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://52.78.34.56:9090";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const PAPER_SORT_OPTIONS = [
   { value: "simScore", label: "유사도" },
