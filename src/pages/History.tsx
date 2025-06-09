@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import { API_BASE_URL } from "../config/constants";
 import axios from "axios";
+import { useSearchStore } from "../hooks/useStore";
 
 interface KeywordHistory {
   sessionId: string;
@@ -20,7 +21,7 @@ interface PaperHistory {
 
 export default function History() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const { setSearchQuery } = useSearchStore();
   const [keywordHistory, setKeywordHistory] = useState<KeywordHistory[]>([]);
   const [paperHistory, setPaperHistory] = useState<PaperHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);

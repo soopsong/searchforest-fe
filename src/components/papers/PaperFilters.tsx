@@ -1,4 +1,3 @@
-// src/components/PaperFilters.tsx
 import { PAPER_SORT_OPTIONS, SORT_ORDER_OPTIONS } from "../../config/constants";
 import { SortKey, SortOrder } from "../../types/paper";
 

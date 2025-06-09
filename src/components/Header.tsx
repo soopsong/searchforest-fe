@@ -1,11 +1,10 @@
-import { useNavigate, useLocation } from "react-router-dom";
-import history from "../../public/history.svg";
-import logoutIcon from "../../public/logout.svg";
+import { useNavigate } from "react-router-dom";
+import history from "../assets/history.svg";
+import logoutIcon from "../assets/logout.svg";
 import LogoButton from "./icons/LogoButton";
 import { useSearchStore } from "../hooks/useStore";
-import { useAuthStore } from "../hooks/useStore";
 import { useAuth } from "../hooks/useAuth";
-import enter from "../../public/enter.png";
+import enter from "../assets/enter.png";
 import { useState, useEffect } from "react";
 
 interface HeaderProps {
@@ -20,11 +19,9 @@ export default function Header({
   onSearch,
 }: HeaderProps) {
   const navigate = useNavigate();
-  // const location = useLocation();
   const { searchQuery, setSearchQuery } = useSearchStore();
   const { isAuthenticated, user, logout } = useAuth();
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
-  // const isHistoryPage = location.pathname === "/history";
 
   // searchQuery가 외부에서 변경될 때 localSearchQuery도 업데이트
   useEffect(() => {
