@@ -114,6 +114,10 @@ export const useSearch = (): UseSearchReturn => {
         }
       );
       console.log("응답데이터: ", response.data);
+      if (!response.data || response.data.length === 0) {
+        setError(new Error("검색 결과가 없습니다"));
+        return;
+      }
 
       setSearchGraph(response.data);
       setRootSessionId(response.data[0].sessionId);

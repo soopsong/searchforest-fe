@@ -8,7 +8,7 @@ export interface Paper {
   authors: string[];
   year: number;
   simScore: number;
-  field: string;
+  s2FieldsOfStudy: string[];
 }
 
 export interface PapersProps {
