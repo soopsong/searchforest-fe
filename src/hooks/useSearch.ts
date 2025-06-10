@@ -100,8 +100,6 @@ export const useSearch = (): UseSearchReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      setLastSearchKeyword(keyword);
-      setCurrentResultIndex(0); // 검색 시 인덱스 초기화
 
       const response = await axios.get<SearchResponse[]>(
         `${API_BASE_URL}/user/search/keyword?text=${encodeURIComponent(
@@ -118,7 +116,8 @@ export const useSearch = (): UseSearchReturn => {
         setError(new Error("검색 결과가 없습니다"));
         return;
       }
-
+      setLastSearchKeyword(keyword);
+      setCurrentResultIndex(0);
       setSearchGraph(response.data);
       setRootSessionId(response.data[0].sessionId);
 
@@ -153,7 +152,6 @@ export const useSearch = (): UseSearchReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      setCurrentResultIndex(0);
 
       const response = await axios.get<SearchResponse[]>(
         `${API_BASE_URL}/user/search/keyword/${rootSessionId}?text=${encodeURIComponent(
@@ -165,6 +163,7 @@ export const useSearch = (): UseSearchReturn => {
           },
         }
       );
+      setCurrentResultIndex(0);
       setSearchGraph(response.data);
 
       const transformedData = transformToTreeData(response.data[0]);
@@ -196,8 +195,6 @@ export const useSearch = (): UseSearchReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      setRootSessionId(sessionId);
-      setCurrentResultIndex(0);
 
       const response = await axios.get<SearchResponse[]>(
         `${API_BASE_URL}/user/search/keyword/${sessionId}?text=${encodeURIComponent(
@@ -209,12 +206,11 @@ export const useSearch = (): UseSearchReturn => {
           },
         }
       );
-      console.log("히스토리 검색 응답데이터: ", response.data);
+      setCurrentResultIndex(0);
       setSearchGraph(response.data);
+      setRootSessionId(sessionId);
+
       const transformedData = transformToTreeData(response.data[0]);
-      // const transformedData = isCitation
-      //   ? transformToCitationTreeData(response.data[0])
-      //   : transformToTreeData(response.data[0]);
       setTreeData(transformedData);
     } catch (err) {
       setError(

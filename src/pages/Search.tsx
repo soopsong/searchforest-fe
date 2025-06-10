@@ -94,36 +94,40 @@ export default function Search() {
     const sessionId = location.state?.sessionId;
     const skipSearch = location.state?.skipSearch;
 
-    if (query) {
-      const decodedQuery = decodeURIComponent(query);
-      setSearchQuery(decodedQuery); // Header의 검색창 텍스트 업데이트
+    if (!query) return;
 
-      if (skipSearch) {
-        // 노드 클릭으로 인한 URL 변경인 경우 검색 스킵
-        location.state.skipSearch = null;
-        return;
-      }
+    const decodedQuery = decodeURIComponent(query);
+    setSearchQuery(decodedQuery); // Header의 검색창 텍스트 업데이트
 
-      if (sessionId) {
-        // 히스토리에서 온 경우
-        searchByHistory(decodedQuery, sessionId);
-        location.state.sessionId = null;
-      } else {
-        search(decodedQuery);
-      }
+    if (skipSearch) {
+      // skipSearch를 null로 설정할 때도 navigate 사용
+      navigate(location.pathname + location.search, {
+        replace: true,
+        state: { ...location.state, skipSearch: null },
+      });
+      return;
     }
-  }, [location.search]);
 
-  // useEffect(() => {
-  //   if (searchQuery) {
-  //     searchByNode(searchQuery, graphStyle === "citation");
-  //   }
-  // }, [graphStyle]);
+    if (sessionId) {
+      // 히스토리에서 온 경우
+      searchByHistory(decodedQuery, sessionId);
+      // sessionId를 null로 설정할 때 navigate 사용
+      navigate(location.pathname + location.search, {
+        replace: true,
+        state: { ...location.state, sessionId: null },
+      });
+      return;
+    }
+
+    search(decodedQuery);
+  }, [location.search]);
 
   const handleNodeClick = async (query: string) => {
     await searchByNode(query);
+    // searchByNode(query);
     setSearchQuery(query);
     navigate(`/search?q=${encodeURIComponent(query)}`, {
+      replace: true,
       state: { skipSearch: true },
     });
   };
