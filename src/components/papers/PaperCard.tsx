@@ -41,10 +41,14 @@ export function PaperCard({
           <div className="flex items-center gap-2 text-sm mb-1">
             <span className="text-gray-500">인용수: {paper.citationCount}</span>
             <span className="text-gray-500">|</span>
-            <span className="text-gray-500">
-              {paper.s2FieldsOfStudy.join(" ∙ ")}
-            </span>
-            <span className="text-gray-500">|</span>
+            {paper.s2FieldsOfStudy.length > 0 && (
+              <>
+                <span className="text-gray-500">
+                  {paper.s2FieldsOfStudy.join(" ∙ ")}
+                </span>
+                <span className="text-gray-500">|</span>
+              </>
+            )}
             <span className="text-gray-500">{paper.year}</span>
             <span className="text-gray-500">|</span>
             <span className="text-primary">
