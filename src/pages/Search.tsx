@@ -154,7 +154,7 @@ export default function Search() {
                 </div>
               ) : (
                 <div className="flex-1 overflow-y-auto">
-                  <div className="flex flex-row justify-between">
+                  <div className="flex flex-row justify-between pb-2">
                     <div className="flex flex-row gap-2 items-center text-sm">
                       <p>스타일</p>
                       <select
@@ -170,7 +170,7 @@ export default function Search() {
                     </div>
 
                     {hasMultipleResults && (
-                      <div className="flex justify-end py-2">
+                      <div className="flex justify-end">
                         {!isFirstResult && (
                           <button
                             onClick={switchToPrevResult}

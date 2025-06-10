@@ -38,10 +38,12 @@ export function PaperCard({
         </div>
         <p className="text-gray-600 mb-1 text-md">{paper.authors.join(", ")}</p>
         <div>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-sm mb-1">
             <span className="text-gray-500">인용수: {paper.citationCount}</span>
             <span className="text-gray-500">|</span>
-            <span className="text-gray-500">{paper.field}</span>
+            <span className="text-gray-500">
+              {paper.s2FieldsOfStudy.join(" ∙ ")}
+            </span>
             <span className="text-gray-500">|</span>
             <span className="text-gray-500">{paper.year}</span>
             <span className="text-gray-500">|</span>
@@ -49,12 +51,24 @@ export function PaperCard({
               유사도: {paper.simScore.toFixed(2)}
             </span>
           </div>
-          <p className="text-gray-700 text-sm">{paper.summary}</p>
+          {paper.summary && (
+            <p>
+              <span className="bg-primary-100 mr-1 text-gray-700 p-1 text-xs rounded-md">
+                요약
+              </span>
+              <span className="text-gray-700 text-sm">{paper.summary}</span>
+            </p>
+          )}
           {paper.abstractText && (
             <>
               {isAbstractExpanded && (
-                <p className="text-gray-700 mt-2 text-sm">
-                  {paper.abstractText}
+                <p className="mt-2">
+                  <span className="bg-gray-200 mr-1 text-gray-700 p-1 text-xs rounded-md">
+                    초록
+                  </span>
+                  <span className="text-gray-700 text-sm">
+                    {paper.abstractText}
+                  </span>
                 </p>
               )}
               <button
