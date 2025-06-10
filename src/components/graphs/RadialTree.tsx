@@ -140,7 +140,7 @@ const RadialTree: React.FC<RadialTreeProps> = ({
 
     node
       .append("circle")
-      .attr("r", (d) => d.data.value * 25 + 15)
+      .attr("r", (d) => Math.sqrt(d.data.citation) * 1.8 + 10)
       .attr("fill", (d) => {
         switch (d.depth) {
           case 0:
