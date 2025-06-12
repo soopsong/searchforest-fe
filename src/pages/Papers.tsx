@@ -1,134 +1,60 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../config/constants";
-import { getToken } from "../utils/token";
-import UpIcon from "../components/icons/UpIcon";
-import DownIcon from "../components/icons/DownIcon";
-import { useMemo } from "react";
-
-interface Paper {
-  paperId: string;
-  title: string;
-  summary: string;
-  abstractText: string;
-  pdfUrl: string;
-  citationCount: number;
-  authors: string[];
-  year: number;
-  simScore: number;
-  field: string;
-}
-
-interface PapersProps {
-  searchQuery: string;
-}
+import { useEffect, useState, useMemo } from "react";
+import { PapersProps, SortKey, SortOrder } from "../types/paper";
+import { usePapers } from "../hooks/usePapers";
+import { usePaperClick } from "../hooks/usePaperClick";
+import { PaperCard } from "../components/papers/PaperCard";
+import { PaperFilters } from "../components/papers/PaperFilters";
 
 export default function Papers({ searchQuery }: PapersProps) {
-  const [papers, setPapers] = useState<Paper[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { papers, isLoading, error } = usePapers(searchQuery);
+
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<string>>(
     new Set()
   );
-  const [sortKey, setSortKey] = useState<"simScore" | "citationCount" | "year">(
-    "simScore"
+  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(
+    new Set()
+  );
+  const [sortKey, setSortKey] = useState<SortKey>("simScore");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [fromYear, setFromYear] = useState<number | null>(null);
+  const [toYear, setToYear] = useState<number | null>(null);
+  const { handlePaperClick } = usePaperClick();
+
+  const minAvailableYear = useMemo(
+    () => Math.min(...papers.map((p) => p.year)),
+    [papers]
+  );
+  const maxAvailableYear = useMemo(
+    () => Math.max(...papers.map((p) => p.year)),
+    [papers]
   );
 
   useEffect(() => {
-    const fetchPapers = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const token = getToken();
-        if (!token) {
-          throw new Error("토큰이 없습니다");
-        }
-
-        const response = await axios.get(
-          `${API_BASE_URL}/user/search/paper?text=${searchQuery}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        setPapers(response.data);
-        console.log("논문 데이터:", response.data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "논문을 불러오는데 실패했습니다"
-        );
-        console.error("논문 데이터 로딩 중 오류:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (searchQuery) {
-      fetchPapers();
+    if (papers.length > 0) {
+      setFromYear(minAvailableYear);
+      setToYear(maxAvailableYear);
     }
-  }, [searchQuery]);
+  }, [papers, minAvailableYear, maxAvailableYear]);
 
   const sortedPapers = useMemo(() => {
     return [...papers].sort((a, b) => {
-      switch (sortKey) {
-        case "citationCount":
-          return b.citationCount - a.citationCount;
-        case "year":
-          return b.year - a.year;
-        case "simScore":
-        default:
-          return b.simScore - a.simScore;
+      const valueA = a[sortKey];
+      const valueB = b[sortKey];
+      if (sortOrder === "asc") {
+        return valueA - valueB;
+      } else {
+        return valueB - valueA;
       }
     });
-  }, [papers, sortKey]);
+  }, [papers, sortKey, sortOrder]);
 
-  // const filteredPapers = useMemo(() => {
-  //   return sortedPapers.filter(
-  //     (p) => p.year >= yearRange[0] && p.year <= yearRange[1]
-  //   );
-  // }, [sortedPapers, yearRange]);
-
-  const handlePaperClick = async (paper: Paper) => {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error("토큰이 없습니다");
-      }
-
-      // API 호출을 백그라운드에서 실행
-      axios
-        .post(
-          `${API_BASE_URL}/user/paper?paperId=${paper.paperId}`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-        .catch((err) => {
-          console.error("논문 접근 기록 중 오류:", err);
-        });
-      console.log("논문 접근 기록 완료");
-    } catch (err) {
-      console.error("논문 접근 중 오류:", err);
-    }
-  };
-
-  if (isLoading) {
-    return <div className="text-center py-4">논문을 불러오는 중...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500 text-center py-4">{error}</div>;
-  }
-
-  if (papers.length === 0) {
-    return <div className="text-center py-4">검색된 논문이 없습니다</div>;
-  }
+  const filteredPapers = useMemo(() => {
+    return sortedPapers.filter((p) => {
+      if (fromYear !== null && p.year < fromYear) return false;
+      if (toYear !== null && p.year > toYear) return false;
+      return true;
+    });
+  }, [sortedPapers, fromYear, toYear]);
 
   const toggleAbstract = (paperId: string) => {
     setExpandedAbstracts((prev) => {
@@ -142,88 +68,56 @@ export default function Papers({ searchQuery }: PapersProps) {
     });
   };
 
+  const toggleSummary = (paperId: string) => {
+    setExpandedSummaries((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(paperId)) {
+        newSet.delete(paperId);
+      } else {
+        newSet.add(paperId);
+      }
+      return newSet;
+    });
+  };
+
+  if (isLoading)
+    return <div className="text-center py-4">논문을 불러오는 중...</div>;
+  if (error)
+    return <div className="text-red-500 text-center py-4">{error}</div>;
+  if (papers.length === 0)
+    return <div className="text-center py-4">검색된 논문이 없습니다</div>;
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex w-full bg-gray-100 rounded-md items-center justify-between py-1 px-4 font-normal text-md mb-3">
-        <div>"{searchQuery}" 검색 결과</div>
-        <div>
-          <span className="text-sm">정렬 기준</span>
-          <select
-            className="text-sm bg-white border border-gray-300 rounded px-2 py-0.5 ml-2"
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
-          >
-            <option value="simScore">유사도</option>
-            <option value="citationCount">인용수</option>
-            <option value="year">연도</option>
-          </select>
+      <div className="flex flex-col w-full items-start justify-center gap-2 font-normal text-md mb-3">
+        <div className="w-full bg-gray-100 rounded-md py-1 px-4 font-normal text-md">
+          "{searchQuery}" 검색 결과
         </div>
+        <PaperFilters
+          sortKey={sortKey}
+          sortOrder={sortOrder}
+          fromYear={fromYear}
+          toYear={toYear}
+          minYear={minAvailableYear}
+          maxYear={maxAvailableYear}
+          onSortKeyChange={setSortKey}
+          onSortOrderChange={setSortOrder}
+          onFromYearChange={setFromYear}
+          onToYearChange={setToYear}
+        />
       </div>
 
       <div className="space-y-3 overflow-y-auto flex-1">
-        {sortedPapers.map((paper) => (
-          <div
+        {filteredPapers.map((paper) => (
+          <PaperCard
             key={paper.paperId}
-            className="block bg-white p-2 rounded-lg hover:bg-gray-50 transition-colors overflow-y-auto"
-          >
-            <div className="flex justify-start items-start">
-              <a
-                href={paper.pdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => handlePaperClick(paper)}
-                className="flex-1"
-              >
-                <h3 className="text-md font-medium">
-                  <span className="text-gray-900 hover:text-primary hover:underline transition-colors duration-100">
-                    {paper.title}
-                  </span>
-                </h3>
-              </a>
-            </div>
-            <p className="text-gray-600 mb-1 text-sm">
-              {paper.authors.join(", ")}
-            </p>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-gray-500">
-                인용수: {paper.citationCount}
-              </span>
-              <span className="text-gray-500">|</span>
-              <span className="text-gray-500">{paper.field}</span>
-              <span className="text-gray-500">|</span>
-              <span className="text-gray-500">{paper.year}년</span>
-              <span className="text-gray-500">|</span>
-              <span className="text-primary">
-                유사도: {paper.simScore.toFixed(2)}
-              </span>
-            </div>
-            <div>
-              <p className="text-gray-700 text-sm">{paper.summary}</p>
-
-              {paper.abstractText && (
-                <>
-                  {expandedAbstracts.has(paper.paperId) && (
-                    <p className="text-gray-700 mt-2 text-sm">
-                      {paper.abstractText}
-                    </p>
-                  )}
-                  <button
-                    onClick={() => toggleAbstract(paper.paperId)}
-                    className="text-xs text-primary-500 hover:font-medium flex items-center gap-1 mt-1"
-                  >
-                    {expandedAbstracts.has(paper.paperId)
-                      ? "초록 접기"
-                      : "초록 보기"}
-                    {expandedAbstracts.has(paper.paperId) ? (
-                      <UpIcon className="w-[10px] text-primary-500" />
-                    ) : (
-                      <DownIcon className="w-[10px] text-primary-500" />
-                    )}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+            paper={paper}
+            isAbstractExpanded={expandedAbstracts.has(paper.paperId)}
+            isSummaryExpanded={expandedSummaries.has(paper.paperId)}
+            onAbstractToggle={() => toggleAbstract(paper.paperId)}
+            onSummaryToggle={() => toggleSummary(paper.paperId)}
+            onPaperClick={handlePaperClick}
+          />
         ))}
       </div>
     </div>

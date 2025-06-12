@@ -5,13 +5,17 @@ import DownIcon from "../icons/DownIcon";
 interface PaperCardProps {
   paper: Paper;
   isAbstractExpanded: boolean;
+  isSummaryExpanded: boolean;
   onAbstractToggle: () => void;
+  onSummaryToggle: () => void;
   onPaperClick: (paper: Paper) => void;
 }
 
 export function PaperCard({
   paper,
   isAbstractExpanded,
+  isSummaryExpanded,
+  onSummaryToggle,
   onAbstractToggle,
   onPaperClick,
 }: PaperCardProps) {
@@ -56,12 +60,28 @@ export function PaperCard({
             </span>
           </div>
           {paper.summary && (
-            <p>
-              <span className="bg-primary-100 mr-1 text-gray-700 p-1 text-xs rounded-md">
+            <div className="mb-2">
+              <span className="bg-primary-100 mr-1 text-gray-700 p-1 text-xs rounded-md inline">
                 요약
               </span>
-              <span className="text-gray-700 text-sm">{paper.summary}</span>
-            </p>
+              <div className="inline">
+                <span className="text-gray-700 text-sm">
+                  {isSummaryExpanded
+                    ? paper.summary
+                    : paper.summary.length > 500
+                    ? `${paper.summary.slice(0, 500)}...`
+                    : paper.summary}
+                </span>
+                {paper.summary.length > 500 && (
+                  <button
+                    onClick={onSummaryToggle}
+                    className="text-sm text-primary-500 hover:font-medium inline-flex items-center gap-1 ml-1"
+                  >
+                    {isSummaryExpanded ? "접기" : "더보기"}
+                  </button>
+                )}
+              </div>
+            </div>
           )}
           {paper.abstractText && (
             <>

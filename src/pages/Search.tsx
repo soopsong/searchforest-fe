@@ -5,11 +5,9 @@ import { useSearch } from "../hooks/useSearch";
 import Header from "../components/Header";
 import { useSearchStore } from "../hooks/useStore";
 import Layout from "../layout/Layout";
-// import Papers from "./Papers";
-// import CitationTree from "../components/graphs/CitationTree";
 import { GraphStyle } from "../types/tree";
 import SCitationTree from "../components/graphs/SCitationTree";
-import SPapers from "./sPapers";
+import Papers from "./Papers";
 
 // const testCitationData = {
 //   id: "language model",
@@ -214,8 +212,7 @@ export default function Search() {
             {/* 결과 섹션 */}
             <div className="w-1/2 h-full">
               {searchQuery ? (
-                // <Papers searchQuery={searchQuery} />
-                <SPapers searchQuery={searchQuery} />
+                <Papers searchQuery={searchQuery} />
               ) : (
                 <div className="text-center text-lg mt-10">
                   검색어를 입력하거나 그래프에서 선택하세요.
